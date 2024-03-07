@@ -14,9 +14,9 @@
 #define CW 1
 #define CCW 2
 
-class Kocoafab_SmartMobility {
+class Addy_SmartMobility {
   public:
-    Kocoafab_SmartMobility ();
+    Addy_SmartMobility ();
 	
 	bool begin();
 	
