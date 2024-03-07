@@ -1,21 +1,22 @@
-#include "Kocoafab_SmartMobility.h"
+#include "Addy_SmartMobility.h"
 
-Kocoafab_SmartMobility::Kocoafab_SmartMobility() {
+
+Addy_SmartMobility::Addy_SmartMobility() {
 }
 
-bool Kocoafab_SmartMobility::begin() {
+bool Addy_SmartMobility::begin() {
 	AFMS = Adafruit_MotorShield();
 
-	motor1 = AFMS.getMotor(1);
-	motor2 = AFMS.getMotor(2);
-	motor3 = AFMS.getMotor(3);
-	motor4 = AFMS.getMotor(4);
+	motor1 = AFMS.getMotor(1); // FL
+	motor2 = AFMS.getMotor(2); // FR
+	motor3 = AFMS.getMotor(3); // RR
+	motor4 = AFMS.getMotor(4); // RL
 
 	return AFMS.begin();
 }
 
 
-void Kocoafab_SmartMobility::setSpeed(uint16_t speed) {
+void Addy_SmartMobility::setSpeed(uint16_t speed) {
 	if(speed > 500){
 		speed = 500;
 	}
@@ -27,7 +28,7 @@ void Kocoafab_SmartMobility::setSpeed(uint16_t speed) {
 }
 
 
-void Kocoafab_SmartMobility::setSpeed(uint8_t id, uint16_t speed) {
+void Addy_SmartMobility::setSpeed(uint8_t id, uint16_t speed) {
 	if(speed > 200){
 		speed = 300;
 	}
@@ -43,15 +44,15 @@ void Kocoafab_SmartMobility::setSpeed(uint8_t id, uint16_t speed) {
 	}
 }
 
-// Kocoafab_SmartMobility move function
-void Kocoafab_SmartMobility::moveF(){
+// Addy_SmartMobility move function
+void Addy_SmartMobility::moveF(){
 	motor1->run(FORWARD);
 	motor2->run(FORWARD);
 	motor3->run(FORWARD);
 	motor4->run(FORWARD);
 }
 
-void Kocoafab_SmartMobility::moveF(uint16_t length){
+void Addy_SmartMobility::moveF(uint16_t length){
 	motor1->run(FORWARD);
 	motor2->run(FORWARD);
 	motor3->run(FORWARD);
@@ -63,14 +64,14 @@ void Kocoafab_SmartMobility::moveF(uint16_t length){
 	motor4->run(RELEASE);	
 }
 
-void Kocoafab_SmartMobility::moveL(){
+void Addy_SmartMobility::moveL(){
 	motor1->run(BACKWARD);
 	motor2->run(FORWARD);
 	motor3->run(BACKWARD);
 	motor4->run(FORWARD);
 }
 
-void Kocoafab_SmartMobility::moveL(uint16_t length){
+void Addy_SmartMobility::moveL(uint16_t length){
 	motor1->run(BACKWARD);
 	motor2->run(FORWARD);
 	motor3->run(BACKWARD);
@@ -82,14 +83,14 @@ void Kocoafab_SmartMobility::moveL(uint16_t length){
 	motor4->run(RELEASE);	
 }
 
-void Kocoafab_SmartMobility::moveR(){
+void Addy_SmartMobility::moveR(){
 	motor1->run(FORWARD);
 	motor2->run(BACKWARD);
 	motor3->run(FORWARD);
 	motor4->run(BACKWARD);
 }
 
-void Kocoafab_SmartMobility::moveR(uint16_t length){
+void Addy_SmartMobility::moveR(uint16_t length){
 	motor1->run(FORWARD);
 	motor2->run(BACKWARD);
 	motor3->run(FORWARD);
@@ -101,14 +102,14 @@ void Kocoafab_SmartMobility::moveR(uint16_t length){
 	motor4->run(RELEASE);	
 }
 
-void Kocoafab_SmartMobility::moveB(){
+void Addy_SmartMobility::moveB(){
 	motor1->run(BACKWARD);
 	motor2->run(BACKWARD);
 	motor3->run(BACKWARD);
 	motor4->run(BACKWARD);
 }
 
-void Kocoafab_SmartMobility::moveB(uint16_t length){
+void Addy_SmartMobility::moveB(uint16_t length){
 	motor1->run(BACKWARD);
 	motor2->run(BACKWARD);
 	motor3->run(BACKWARD);
@@ -120,14 +121,14 @@ void Kocoafab_SmartMobility::moveB(uint16_t length){
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::moveLF(){
+void Addy_SmartMobility::moveLF(){
 	motor1->run(RELEASE);
 	motor2->run(FORWARD);
 	motor3->run(RELEASE);
 	motor4->run(FORWARD);
 }
 
-void Kocoafab_SmartMobility::moveLF(uint16_t length){
+void Addy_SmartMobility::moveLF(uint16_t length){
 	motor1->run(RELEASE);
 	motor2->run(FORWARD);
 	motor3->run(RELEASE);
@@ -139,14 +140,14 @@ void Kocoafab_SmartMobility::moveLF(uint16_t length){
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::moveRF(){
+void Addy_SmartMobility::moveRF(){
 	motor1->run(FORWARD);
 	motor2->run(RELEASE);
 	motor3->run(FORWARD);
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::moveRF(uint16_t length){
+void Addy_SmartMobility::moveRF(uint16_t length){
 	motor1->run(FORWARD);
 	motor2->run(RELEASE);
 	motor3->run(FORWARD);
@@ -158,14 +159,14 @@ void Kocoafab_SmartMobility::moveRF(uint16_t length){
 	motor4->run(RELEASE);	
 }
 
-void Kocoafab_SmartMobility::moveLB(){
+void Addy_SmartMobility::moveLB(){
 	motor1->run(BACKWARD);
 	motor2->run(RELEASE);
 	motor3->run(BACKWARD);
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::moveLB(uint16_t length){
+void Addy_SmartMobility::moveLB(uint16_t length){
 	motor1->run(BACKWARD);
 	motor2->run(RELEASE);
 	motor3->run(BACKWARD);
@@ -177,14 +178,14 @@ void Kocoafab_SmartMobility::moveLB(uint16_t length){
 	motor4->run(RELEASE);	
 }
 
-void Kocoafab_SmartMobility::moveRB(){
+void Addy_SmartMobility::moveRB(){
 	motor1->run(RELEASE);
 	motor2->run(BACKWARD);
 	motor3->run(RELEASE);
 	motor4->run(BACKWARD);
 }
 
-void Kocoafab_SmartMobility::moveRB(uint16_t length){
+void Addy_SmartMobility::moveRB(uint16_t length){
 	motor1->run(RELEASE);
 	motor2->run(BACKWARD);
 	motor3->run(RELEASE);
@@ -196,14 +197,14 @@ void Kocoafab_SmartMobility::moveRB(uint16_t length){
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::stopAll(){
+void Addy_SmartMobility::stopAll(){
 	motor1->run(RELEASE);
 	motor2->run(RELEASE);
 	motor3->run(RELEASE);
 	motor4->run(RELEASE);
 }
 
-void Kocoafab_SmartMobility::stopAll(uint16_t length){
+void Addy_SmartMobility::stopAll(uint16_t length){
 	motor1->run(RELEASE);
 	motor2->run(RELEASE);
 	motor3->run(RELEASE);
@@ -212,7 +213,7 @@ void Kocoafab_SmartMobility::stopAll(uint16_t length){
 }
 
 // 스모키 움직임 함수(단독 명령어)
-void Kocoafab_SmartMobility::moveTo(uint8_t cmd){
+void Addy_SmartMobility::moveTo(uint8_t cmd){
 	if(cmd == 1){
 		motor1->run(BACKWARD);
 		motor2->run(RELEASE);
@@ -271,7 +272,7 @@ void Kocoafab_SmartMobility::moveTo(uint8_t cmd){
 
 
 // 스모키 움직임 함수(단독 명령어)
-void Kocoafab_SmartMobility::moveTo(uint8_t cmd, uint16_t length){
+void Addy_SmartMobility::moveTo(uint8_t cmd, uint16_t length){
 	if(cmd == 1){
 		motor1->run(RELEASE);
 		motor2->run(FORWARD);
@@ -337,7 +338,7 @@ void Kocoafab_SmartMobility::moveTo(uint8_t cmd, uint16_t length){
 
 
 // 스모키 움직임 함수(단독 명령어)
-void Kocoafab_SmartMobility::setMove(uint8_t cmd){
+void Addy_SmartMobility::setMove(uint8_t cmd){
 	if(cmd == 1){
 		motor1->run(FORWARD);
 		motor2->run(FORWARD);
@@ -395,7 +396,7 @@ void Kocoafab_SmartMobility::setMove(uint8_t cmd){
 }
 
 // 스모키 움직임 함수(단독 명령어)
-void Kocoafab_SmartMobility::setMove(uint8_t cmd, uint16_t length){
+void Addy_SmartMobility::setMove(uint8_t cmd, uint16_t length){
 	if(cmd == 1){
 		motor1->run(FORWARD);
 		motor2->run(FORWARD);
@@ -460,7 +461,7 @@ void Kocoafab_SmartMobility::setMove(uint8_t cmd, uint16_t length){
 }
 
 // 스모키 모터 4개 동시 제어(회전 방향)
-void Kocoafab_SmartMobility::setMotor(uint8_t cmd){
+void Addy_SmartMobility::setMotor(uint8_t cmd){
 	motor1->run(cmd);
 	motor2->run(cmd);
 	motor3->run(cmd);
@@ -469,7 +470,7 @@ void Kocoafab_SmartMobility::setMotor(uint8_t cmd){
 
 
 // 모터 1개 제어(모터 번호, 회전 방향)
-void Kocoafab_SmartMobility::setMotor(uint8_t id, uint8_t cmd) {
+void Addy_SmartMobility::setMotor(uint8_t id, uint8_t cmd) {
 	if(id == 1){
 		motor1->run(cmd);
 	}
@@ -486,7 +487,7 @@ void Kocoafab_SmartMobility::setMotor(uint8_t id, uint8_t cmd) {
 
 
 // CW -> 시계방향(우회전) / CCW -> 반시계방향(좌회전)
-void Kocoafab_SmartMobility::rotate(uint8_t dir){
+void Addy_SmartMobility::rotate(uint8_t dir){
 	if(dir == 1){
 		motor1->run(BACKWARD);
 		motor2->run(BACKWARD);
@@ -503,7 +504,7 @@ void Kocoafab_SmartMobility::rotate(uint8_t dir){
 }
 
 // CW -> 시계방향(우회전), CCW -> 반시계방향(좌회전) / length 회전 시간(ms) 
-void Kocoafab_SmartMobility::rotate(uint8_t dir, uint16_t length){
+void Addy_SmartMobility::rotate(uint8_t dir, uint16_t length){
 	if(dir == 1){
 		motor1->run(BACKWARD);
 		motor2->run(BACKWARD);
@@ -531,7 +532,7 @@ void Kocoafab_SmartMobility::rotate(uint8_t dir, uint16_t length){
 
 
 // length -> delay 시간 / iter -> 반복 횟수 / dir 1(CW) -> 시계방향, 2(CCW) -> 반시계방향
-void Kocoafab_SmartMobility::drawRect(uint16_t length, uint16_t iter, uint8_t dir){
+void Addy_SmartMobility::drawRect(uint16_t length, uint16_t iter, uint8_t dir){
 	for(int i = 0; i < iter; i++){
 		if(dir == 1){
 			motor1->run(FORWARD);
@@ -631,7 +632,7 @@ void Kocoafab_SmartMobility::drawRect(uint16_t length, uint16_t iter, uint8_t di
 
 
 // length -> delay 시간 / iter -> 반복 횟수 / dir 1(CW) -> 시계방향, 2(CCW) -> 반시계방향
-void Kocoafab_SmartMobility::drawTriangle(uint16_t length, uint16_t iter, uint8_t dir){
+void Addy_SmartMobility::drawTriangle(uint16_t length, uint16_t iter, uint8_t dir){
 	for(int i = 0; i < iter; i++){
 		if(dir == 1){
 			motor1->run(FORWARD);
@@ -705,14 +706,14 @@ void Kocoafab_SmartMobility::drawTriangle(uint16_t length, uint16_t iter, uint8_
 }
 
 
-void Kocoafab_SmartMobility::setUltrasonic(uint8_t t, uint8_t e){
+void Addy_SmartMobility::setUltrasonic(uint8_t t, uint8_t e){
 	trig = t;
 	echo = e;
 	pinMode(trig, OUTPUT);
 	pinMode(echo, INPUT);
 }
 
-float Kocoafab_SmartMobility::getDistance(){
+float Addy_SmartMobility::getDistance(){
 	digitalWrite(trig, LOW);
 	digitalWrite(echo, LOW);
 	delayMicroseconds(2);
