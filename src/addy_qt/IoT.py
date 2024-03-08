@@ -7,11 +7,12 @@ import time
 import datetime
 import numpy as np
 import serial
+import re
 
 
 from_class = uic.loadUiType("IoT.ui")[0]
 import pandas as pd
-
+#import atexit
 class Sensor(QThread):
     update = pyqtSignal(str)  # Signal to emit the received data
 
@@ -72,7 +73,7 @@ class WindowClass(QMainWindow, from_class):
         self.sensor_thread = Sensor(self)
         self.sensor_thread.update.connect(self.handle_sensor_data)
         
-        self.cols = ["date", "temp", "hum", "co2", "dust", "place"]
+        self.cols = ['Date', 'Temperature (°C)', 'Humidity (%)', 'Co2 (ppm)', 'PM-10 (μg/m3)', 'Place']
 
     def exportTable(self):
         table_1 = pd.DataFrame(self.getTable(self.status_1,1), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_1.csv', index=False)
@@ -106,21 +107,31 @@ class WindowClass(QMainWindow, from_class):
 
     def SensorStop(self):
         self.sensor_thread.running = False
-        #self.py_serial.close()
+        
+        """try:
+            #atexit.register(self.sensor_thread.py_serial.close())
+            self.sensor_thread.py_serial.close()
+        except Exception as e:
+            print(e)"""
+            
         
     def handle_sensor_data(self, data):
         # Process the received sensor data here
-        
-        data_sp = data.split("")
+        temperature_match = re.search(r'Temperature: (\d+\.\d+)°C', data)
+        humidity_match = re.search(r'Humidity: (\d+\.\d+)%', data)
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  
-        
-        if len(data_sp) >= 2:
-            self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
-            self.LiveStatus.setItem(0, 1, QTableWidgetItem(data_sp[1]))
-            self.LiveStatus.setItem(0, 2, QTableWidgetItem(data_sp[4]))
-            self.LiveStatus.setItem(0, 3, QTableWidgetItem("0"))
-            self.LiveStatus.setItem(0, 4, QTableWidgetItem("0"))
-            self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
+        temperature = None  # 미리 변수를 정의해줌
+        humidity = None     # 미리 변수를 정의해줌
+        if temperature_match and humidity_match:
+            temperature = float(temperature_match.group(1))
+            humidity = float(humidity_match.group(1))
+
+        self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
+        self.LiveStatus.setItem(0, 1, QTableWidgetItem(str(temperature)))
+        self.LiveStatus.setItem(0, 2, QTableWidgetItem(str(humidity)))
+        self.LiveStatus.setItem(0, 3, QTableWidgetItem("0"))
+        self.LiveStatus.setItem(0, 4, QTableWidgetItem("0"))
+        self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
                         
     def Add_1(self):
         self.status_1.insertRow(self.row_count_1)
