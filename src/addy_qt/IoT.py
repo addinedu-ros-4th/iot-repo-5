@@ -41,7 +41,7 @@ class WindowClass(QMainWindow, from_class):
         super().__init__()
         self.setupUi(self)
         self.isSensorOn = False
-
+        self.place = "0"
         self.LiveStatus.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.status_1.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.status_2.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) 
@@ -58,6 +58,8 @@ class WindowClass(QMainWindow, from_class):
         self.test_4.clicked.connect(self.Add_4)
         self.test_5.clicked.connect(self.Add_5)
         self.btnSensor.clicked.connect(self.clickSensor)
+        self.btnExport.clicked.connect(self.exportTable)
+        self.btnReset.clicked.connect(self.reset)
         
         self.row_count_1 = self.status_1.rowCount()
         self.row_count_2 = self.status_2.rowCount()
@@ -65,15 +67,28 @@ class WindowClass(QMainWindow, from_class):
         self.row_count_4 = self.status_4.rowCount()
         self.row_count_5 = self.status_5.rowCount()
         self.LiveStatus.insertRow(0)
-        self.status_1.insertRow(0)
-        self.status_2.insertRow(0)
-        self.status_3.insertRow(0)
-        self.status_4.insertRow(0)
-        self.status_5.insertRow(0)
 
 
         self.sensor_thread = Sensor(self)
         self.sensor_thread.update.connect(self.handle_sensor_data)
+        
+        self.cols = ["date", "temp", "hum", "co2", "dust", "place"]
+
+    def exportTable(self):
+        table_1 = pd.DataFrame(self.getTable(self.status_1,1), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_1.csv', index=False)
+        table_2 = pd.DataFrame(self.getTable(self.status_2,2), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_2.csv', index=False)
+        table_3 = pd.DataFrame(self.getTable(self.status_3,3), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_3.csv', index=False)
+        table_4 = pd.DataFrame(self.getTable(self.status_4,4), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_4.csv', index=False)
+        table_5 = pd.DataFrame(self.getTable(self.status_5,5), columns=self.cols).to_csv('~/amr_ws/IoT/data/table/table_5.csv', index=False)
+
+
+    def reset(self) :
+ 
+        self.status_1.setRowCount(0)
+        self.status_2.setRowCount(0)
+        self.status_3.setRowCount(0)
+        self.status_4.setRowCount(0)
+        self.status_5.setRowCount(0)
 
     def clickSensor(self):
         if self.isSensorOn == False:
@@ -86,65 +101,87 @@ class WindowClass(QMainWindow, from_class):
             self.SensorStop()
 
     def SensorStart(self):
-        self.camera.running = True
+        self.sensor_thread.running = True
         self.sensor_thread.start()
 
     def SensorStop(self):
         self.sensor_thread.running = False
-        self.py_serial.close()
+        #self.py_serial.close()
         
     def handle_sensor_data(self, data):
         # Process the received sensor data here
-        data_sp = data.split()
+        
+        data_sp = data.split("")
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  
-
+        
         if len(data_sp) >= 2:
-            self.LiveStatus.setItem(0, 0, QTableWidgetItem(data_sp[0]))
+            self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
             self.LiveStatus.setItem(0, 1, QTableWidgetItem(data_sp[1]))
-            self.LiveStatus.setItem(0, 2, QTableWidgetItem(current_time))
+            self.LiveStatus.setItem(0, 2, QTableWidgetItem(data_sp[4]))
+            self.LiveStatus.setItem(0, 3, QTableWidgetItem("0"))
+            self.LiveStatus.setItem(0, 4, QTableWidgetItem("0"))
+            self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
                         
     def Add_1(self):
-        row = 0
         self.status_1.insertRow(self.row_count_1)
         self.status_1.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
         self.status_1.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_1.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
-        
+        self.status_1.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text())) 
+        self.status_1.setItem(self.row_count_1, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        self.status_1.setItem(self.row_count_1, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        self.place = "1"
+
         self.changeQR1Color()
 
 
     def Add_2(self):
-        row = 0
         self.status_2.insertRow(self.row_count_2)
-        self.status_2.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_2.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_2.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_2.setItem(self.row_count_2, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        self.status_2.setItem(self.row_count_2, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        self.status_2.setItem(self.row_count_2, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_2.setItem(self.row_count_2, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        self.status_2.setItem(self.row_count_2, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        self.place = "2"
+
+        
         self.changeQR2Color()
 
         
     def Add_3(self):
-        row = 0
         self.status_3.insertRow(self.row_count_3)
-        self.status_3.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_3.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_3.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_3.setItem(self.row_count_3, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        self.status_3.setItem(self.row_count_3, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        self.status_3.setItem(self.row_count_3, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_3.setItem(self.row_count_3, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        self.status_3.setItem(self.row_count_3, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        self.place = "3"
+
+        
         self.changeQR3Color()
 
         
     def Add_4(self):
-        row = 0
         self.status_4.insertRow(self.row_count_4)
-        self.status_4.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_4.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_4.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_4.setItem(self.row_count_4, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        self.status_4.setItem(self.row_count_4, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        self.status_4.setItem(self.row_count_4, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_4.setItem(self.row_count_4, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        self.status_4.setItem(self.row_count_4, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        self.place = "4"
+
+        
         self.changeQR4Color()
 
     def Add_5(self):
-        row = 0
         self.status_5.insertRow(self.row_count_5)
-        self.status_5.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_5.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_5.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_5.setItem(self.row_count_5, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        self.status_5.setItem(self.row_count_5, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        self.status_5.setItem(self.row_count_5, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        self.status_5.setItem(self.row_count_5, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        self.status_5.setItem(self.row_count_5, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        self.place = "5"
+
+        
         self.changeQR5Color()
 
 
@@ -186,7 +223,20 @@ class WindowClass(QMainWindow, from_class):
         self.QR_5.setStyleSheet("background-color: {}".format(self.color.name()))
         
 
-            
+    def getTable(self, table, btn_num):
+        table_list = []
+        for i in range(table.rowCount()):
+            row_data = []
+            for j in range(table.columnCount()):
+                item = table.item(i, j)
+                if item is not None:
+                    row_data.append(item.text())
+                else:
+                    row_data.append("")  # If cell is empty, add an empty string
+            row_data.append(btn_num)
+            table_list.append(row_data)
+        return table_list
+
 
 
         
