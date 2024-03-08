@@ -881,7 +881,7 @@
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(249, 240, 107);</string>
+    <string notr="true">background-color: rgb(255, 0, 0);</string>
    </property>
    <property name="text">
     <string>Emergency Stop</string>
