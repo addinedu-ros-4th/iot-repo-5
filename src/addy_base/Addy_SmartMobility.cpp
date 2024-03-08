@@ -17,10 +17,9 @@ bool Addy_SmartMobility::begin() {
 
 
 void Addy_SmartMobility::setSpeed(uint16_t speed) {
-	if(speed > 500){
-		speed = 500;
+	if(speed > 200){
+		speed = 200;
 	}
-	
 	motor1->setSpeed(speed);
 	motor2->setSpeed(speed);
 	motor3->setSpeed(speed);
@@ -30,7 +29,7 @@ void Addy_SmartMobility::setSpeed(uint16_t speed) {
 
 void Addy_SmartMobility::setSpeed(uint8_t id, uint16_t speed) {
 	if(speed > 200){
-		speed = 300;
+		speed = 200;
 	}
 	
 	if(id == 1){
@@ -53,15 +52,9 @@ void Addy_SmartMobility::moveF(){
 }
 
 void Addy_SmartMobility::moveF(uint16_t length){
-	motor1->run(FORWARD);
-	motor2->run(FORWARD);
-	motor3->run(FORWARD);
-	motor4->run(FORWARD);
+	moveF();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);	
+	stopAll();
 }
 
 void Addy_SmartMobility::moveL(){
@@ -72,15 +65,9 @@ void Addy_SmartMobility::moveL(){
 }
 
 void Addy_SmartMobility::moveL(uint16_t length){
-	motor1->run(BACKWARD);
-	motor2->run(FORWARD);
-	motor3->run(BACKWARD);
-	motor4->run(FORWARD);
+	moveL();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);	
+	stopAll();
 }
 
 void Addy_SmartMobility::moveR(){
@@ -91,15 +78,9 @@ void Addy_SmartMobility::moveR(){
 }
 
 void Addy_SmartMobility::moveR(uint16_t length){
-	motor1->run(FORWARD);
-	motor2->run(BACKWARD);
-	motor3->run(FORWARD);
-	motor4->run(BACKWARD);
+	moveR();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);	
+	stopAll();
 }
 
 void Addy_SmartMobility::moveB(){
@@ -110,15 +91,9 @@ void Addy_SmartMobility::moveB(){
 }
 
 void Addy_SmartMobility::moveB(uint16_t length){
-	motor1->run(BACKWARD);
-	motor2->run(BACKWARD);
-	motor3->run(BACKWARD);
-	motor4->run(BACKWARD);
+	moveB();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 }
 
 void Addy_SmartMobility::moveLF(){
@@ -129,15 +104,9 @@ void Addy_SmartMobility::moveLF(){
 }
 
 void Addy_SmartMobility::moveLF(uint16_t length){
-	motor1->run(RELEASE);
-	motor2->run(FORWARD);
-	motor3->run(RELEASE);
-	motor4->run(FORWARD);
+	moveLF();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 }
 
 void Addy_SmartMobility::moveRF(){
@@ -148,15 +117,9 @@ void Addy_SmartMobility::moveRF(){
 }
 
 void Addy_SmartMobility::moveRF(uint16_t length){
-	motor1->run(FORWARD);
-	motor2->run(RELEASE);
-	motor3->run(FORWARD);
-	motor4->run(RELEASE);
+	moveRF();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);	
+	stopAll();
 }
 
 void Addy_SmartMobility::moveLB(){
@@ -167,15 +130,9 @@ void Addy_SmartMobility::moveLB(){
 }
 
 void Addy_SmartMobility::moveLB(uint16_t length){
-	motor1->run(BACKWARD);
-	motor2->run(RELEASE);
-	motor3->run(BACKWARD);
-	motor4->run(RELEASE);
+	moveLB();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);	
+	stopAll();
 }
 
 void Addy_SmartMobility::moveRB(){
@@ -186,15 +143,9 @@ void Addy_SmartMobility::moveRB(){
 }
 
 void Addy_SmartMobility::moveRB(uint16_t length){
-	motor1->run(RELEASE);
-	motor2->run(BACKWARD);
-	motor3->run(RELEASE);
-	motor4->run(BACKWARD);
+	moveRB();
 	delay(length);
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 }
 
 void Addy_SmartMobility::stopAll(){
@@ -205,259 +156,70 @@ void Addy_SmartMobility::stopAll(){
 }
 
 void Addy_SmartMobility::stopAll(uint16_t length){
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 	delay(length);
 }
 
 // 스모키 움직임 함수(단독 명령어)
 void Addy_SmartMobility::moveTo(uint8_t cmd){
-	if(cmd == 1){
-		motor1->run(BACKWARD);
-		motor2->run(RELEASE);
-		motor3->run(BACKWARD);
-		motor4->run(RELEASE);
+
+	// 사선 좌측 후진 
+	if(cmd == 1){ 
+		moveLB();
 	}
+	//후진
 	else if(cmd == 2){
-		motor1->run(BACKWARD);
-		motor2->run(BACKWARD);
-		motor3->run(BACKWARD);
-		motor4->run(BACKWARD);
+		moveB();
 	}
+	// 사선 우측 후진 
 	else if(cmd == 3){
-		motor1->run(RELEASE);
-		motor2->run(BACKWARD);
-		motor3->run(RELEASE);
-		motor4->run(BACKWARD);
+		moveRB();
 	}
+	// 좌측 수평 이동
 	else if(cmd == 4){
-		motor1->run(BACKWARD);
-		motor2->run(FORWARD);
-		motor3->run(BACKWARD);
-		motor4->run(FORWARD);
+		moveL();
 	}
+	// 정지
 	else if(cmd == 5){
-		motor1->run(RELEASE);
-		motor2->run(RELEASE);
-		motor3->run(RELEASE);
-		motor4->run(RELEASE);
+		stopAll();
 	}
+	// 우측 수평 이동
 	else if(cmd == 6){
-		motor1->run(FORWARD);
-		motor2->run(BACKWARD);
-		motor3->run(FORWARD);
-		motor4->run(BACKWARD);
+		moveR();
 	}
+	// 사선 좌측 전진
 	else if(cmd == 7){
-		motor1->run(RELEASE);
-		motor2->run(FORWARD);
-		motor3->run(RELEASE);
-		motor4->run(FORWARD);
+		moveLF();
 	}
+	// 전진
 	else if(cmd == 8){
-		motor1->run(FORWARD);
-		motor2->run(FORWARD);
-		motor3->run(FORWARD);
-		motor4->run(FORWARD);
+		moveF();
 	}
+	// 사선 우측 전진
 	else if(cmd == 9){
-		motor1->run(FORWARD);
-		motor2->run(RELEASE);
-		motor3->run(FORWARD);
-		motor4->run(RELEASE);
+		moveRF();
 	}
 }
 
 
 // 스모키 움직임 함수(단독 명령어)
 void Addy_SmartMobility::moveTo(uint8_t cmd, uint16_t length){
-	if(cmd == 1){
-		motor1->run(RELEASE);
-		motor2->run(FORWARD);
-		motor3->run(RELEASE);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 2){
-		motor1->run(BACKWARD);
-		motor2->run(BACKWARD);
-		motor3->run(BACKWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 3){
-		motor1->run(FORWARD);
-		motor2->run(RELEASE);
-		motor3->run(FORWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 4){
-		motor1->run(BACKWARD);
-		motor2->run(FORWARD);
-		motor3->run(BACKWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 5){
-		motor1->run(RELEASE);
-		motor2->run(RELEASE);
-		motor3->run(RELEASE);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 6){
-		motor1->run(FORWARD);
-		motor2->run(BACKWARD);
-		motor3->run(FORWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 7){
-		motor1->run(BACKWARD);
-		motor2->run(RELEASE);
-		motor3->run(BACKWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 8){
-		motor1->run(FORWARD);
-		motor2->run(FORWARD);
-		motor3->run(FORWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 9){
-		motor1->run(RELEASE);
-		motor2->run(BACKWARD);
-		motor3->run(RELEASE);
-		motor4->run(BACKWARD);
-	}
-	
+	moveTo(cmd);
 	delay(length);
-	
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 }
 
 
 // 스모키 움직임 함수(단독 명령어)
 void Addy_SmartMobility::setMove(uint8_t cmd){
-	if(cmd == 1){
-		motor1->run(FORWARD);
-		motor2->run(FORWARD);
-		motor3->run(FORWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 2){
-		motor1->run(BACKWARD);
-		motor2->run(BACKWARD);
-		motor3->run(BACKWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 3){
-		motor1->run(RELEASE);
-		motor2->run(RELEASE);
-		motor3->run(RELEASE);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 4){
-		motor1->run(BACKWARD);
-		motor2->run(FORWARD);
-		motor3->run(BACKWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 5){
-		motor1->run(FORWARD);
-		motor2->run(BACKWARD);
-		motor3->run(FORWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 6){
-		motor1->run(RELEASE);
-		motor2->run(FORWARD);
-		motor3->run(RELEASE);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 7){
-		motor1->run(FORWARD);
-		motor2->run(RELEASE);
-		motor3->run(FORWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 8){
-		motor1->run(BACKWARD);
-		motor2->run(RELEASE);
-		motor3->run(BACKWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 9){
-		motor1->run(RELEASE);
-		motor2->run(BACKWARD);
-		motor3->run(RELEASE);
-		motor4->run(BACKWARD);
-	}
+	moveTo(cmd);
 }
 
 // 스모키 움직임 함수(단독 명령어)
 void Addy_SmartMobility::setMove(uint8_t cmd, uint16_t length){
-	if(cmd == 1){
-		motor1->run(FORWARD);
-		motor2->run(FORWARD);
-		motor3->run(FORWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 2){
-		motor1->run(BACKWARD);
-		motor2->run(BACKWARD);
-		motor3->run(BACKWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 3){
-		motor1->run(RELEASE);
-		motor2->run(RELEASE);
-		motor3->run(RELEASE);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 4){
-		motor1->run(BACKWARD);
-		motor2->run(FORWARD);
-		motor3->run(BACKWARD);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 5){
-		motor1->run(FORWARD);
-		motor2->run(BACKWARD);
-		motor3->run(FORWARD);
-		motor4->run(BACKWARD);
-	}
-	else if(cmd == 6){
-		motor1->run(RELEASE);
-		motor2->run(FORWARD);
-		motor3->run(RELEASE);
-		motor4->run(FORWARD);
-	}
-	else if(cmd == 7){
-		motor1->run(FORWARD);
-		motor2->run(RELEASE);
-		motor3->run(FORWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 8){
-		motor1->run(BACKWARD);
-		motor2->run(RELEASE);
-		motor3->run(BACKWARD);
-		motor4->run(RELEASE);
-	}
-	else if(cmd == 9){
-		motor1->run(RELEASE);
-		motor2->run(BACKWARD);
-		motor3->run(RELEASE);
-		motor4->run(BACKWARD);
-	}
-	
+	moveTo(cmd);
 	delay(length);
-	
-	motor1->run(RELEASE);
-	motor2->run(RELEASE);
-	motor3->run(RELEASE);
-	motor4->run(RELEASE);
+	stopAll();
 }
 
 // 스모키 모터 4개 동시 제어(회전 방향)
