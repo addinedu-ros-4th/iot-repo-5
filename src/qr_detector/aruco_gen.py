@@ -2,11 +2,14 @@ import cv2
 import cv2.aruco as aruco
 import matplotlib.pyplot as plt
 
-# 마커 사이즈 설정
-marker_size = 200
 
+# aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
 # Aruco 딕셔너리 생성
-aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+board_type = aruco.DICT_6X6_250
+# 마커 사이즈 설정
+marker_size = 400
+
+aruco_dict = aruco.getPredefinedDictionary(board_type)
 
 # 마커 생성 및 표출
 # fig = plt.figure()
@@ -25,7 +28,8 @@ aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
 # 마커 생성 및 저장
 for i in range(5):  # 5개의 마커 생성
     marker_id = i
-    marker_image = aruco.drawMarker(aruco_dict, marker_id, marker_size)
+    # marker_image = aruco.drawMarker(aruco_dict, marker_id, marker_size)
+    marker_image = aruco.generateImageMarker(aruco_dict, marker_id, marker_size)
     
     # 이미지 파일로 저장
     cv2.imwrite(f"marker_{marker_id}.png", marker_image)
