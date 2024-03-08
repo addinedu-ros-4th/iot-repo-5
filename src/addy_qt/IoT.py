@@ -86,12 +86,13 @@ class WindowClass(QMainWindow, from_class):
             self.SensorStop()
 
     def SensorStart(self):
+        self.camera.running = True
         self.sensor_thread.start()
 
     def SensorStop(self):
-        self.sensor_thread.stop()
-        self.sensor_thread.wait()
-
+        self.sensor_thread.running = False
+        self.py_serial.close()
+        
     def handle_sensor_data(self, data):
         # Process the received sensor data here
         data_sp = data.split()
