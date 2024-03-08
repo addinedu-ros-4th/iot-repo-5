@@ -311,12 +311,12 @@
     </property>
     <column>
      <property name="text">
-      <string>Place</string>
+      <string>Left</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>Temperature</string>
+      <string>Right</string>
      </property>
     </column>
     <column>
@@ -335,7 +335,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="place_1">
      <attribute name="title">
@@ -352,12 +352,12 @@
       </property>
       <column>
        <property name="text">
-        <string>Place</string>
+        <string>Left</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Temperature</string>
+        <string>Right</string>
        </property>
       </column>
       <column>
@@ -382,12 +382,12 @@
       </property>
       <column>
        <property name="text">
-        <string>Place</string>
+        <string>Left</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Temperature</string>
+        <string>Right</string>
        </property>
       </column>
       <column>
@@ -412,12 +412,12 @@
       </property>
       <column>
        <property name="text">
-        <string>Place</string>
+        <string>Left</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Temperature</string>
+        <string>Right</string>
        </property>
       </column>
       <column>
@@ -442,12 +442,12 @@
       </property>
       <column>
        <property name="text">
-        <string>Place</string>
+        <string>Left</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Temperature</string>
+        <string>Right</string>
        </property>
       </column>
       <column>
@@ -472,12 +472,12 @@
       </property>
       <column>
        <property name="text">
-        <string>Place</string>
+        <string>Left</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Temperature</string>
+        <string>Right</string>
        </property>
       </column>
       <column>
@@ -697,7 +697,7 @@
     </property>
    </widget>
   </widget>
-  <widget class="QPushButton" name="Connect">
+  <widget class="QPushButton" name="btnSensor">
    <property name="geometry">
     <rect>
      <x>980</x>
@@ -707,7 +707,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Connect</string>
+    <string>Sensor on</string>
    </property>
   </widget>
   <widget class="QPushButton" name="test">
