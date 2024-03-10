@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     board_type = aruco.DICT_6X6_250
-    marker_size = 400
+    marker_size = 200 
     aruco_dict = aruco.getPredefinedDictionary(board_type)
 
     # fig = plt.figure()
@@ -24,4 +24,4 @@ if __name__ == "__main__":
         marker_id = i
         marker_image = aruco.generateImageMarker(aruco_dict, marker_id, marker_size)
         
-        cv2.imwrite(f"marker_{marker_id}.png", marker_image)
+        cv2.imwrite(f"./test/marker_{marker_id}.png", marker_image)
