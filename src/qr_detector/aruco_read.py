@@ -1,7 +1,9 @@
 import cv2
 import cv2.aruco as aruco
+import numpy as np
+
 import time 
-import numpy as np 
+import socket
 
 def find_center_pt(frame, corners):
     global blue_BGR, marker_3d_edges, cmtx, dist
@@ -51,11 +53,24 @@ def find_corner_pnp(frame, corners):
 
     return frame
 
+
+def use_usb_cam():
+    # 카메라 캡처
+    cap = cv2.VideoCapture(0)
+
+    return cap
+
+def use_esp_cam():
+    SERVER_IP = '192.168.101.6'
+    PORT = 81
+    esp_url = f"http://{SERVER_IP}:{PORT}/stream"
+    cap = cv2.VideoCapture(esp_url)
+    return cap
+
 def main():
     global blue_BGR, marker_3d_edges, cmtx, dist
 
-    # 카메라 캡처
-    cap = cv2.VideoCapture(0)
+    cap = use_esp_cam()
     width = 640
     height = 480
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -77,7 +92,7 @@ def main():
     blue_BGR = (255, 0, 0)
 
     # marker_size = 35
-    marker_size = 400 # pixel
+    marker_size = 200 # pixel
     marker_3d_edges = np.array([    [0,0,0],
                                     [0,marker_size,0],
                                     [marker_size,marker_size,0],
@@ -87,6 +102,7 @@ def main():
         ret, frame = cap.read()
         if ret:
             # Aruco 마커 검출
+            # frame = cv2.resize(frame, (640, 480))
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
 
@@ -96,14 +112,14 @@ def main():
                 pass
 
             frame_cen = frame.copy()
-            frame_pnp = frame.copy()
+            # frame_pnp = frame.copy()
 
             frame_cen = find_center_pt(frame_cen, corners)
-            frame_pnp = find_corner_pnp(frame_pnp, corners)
+            # frame_pnp = find_corner_pnp(frame_pnp, corners)
 
             # 화면에 표시
             # cv2.imshow('gray', gray)
-            cv2.imshow('frame_pnp', frame_pnp)
+            # cv2.imshow('frame_pnp', frame_pnp)
             cv2.imshow('frame_cen', frame_cen)
 
             # 'q' 키를 누르면 종료
