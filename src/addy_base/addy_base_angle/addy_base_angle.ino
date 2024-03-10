@@ -1,4 +1,4 @@
-#include "../Addy_SmartMobility.h"
+#include "./Addy_SmartMobility.h"
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
@@ -13,11 +13,11 @@ int delta = 0;
 void setup() {
   Serial.begin(9600);
   BTSerial.begin(9600);
-  if (!sm.begin()) {
+  /*if (!sm.begin()) {
     Serial.println("모터 쉴드 연결을 다시 확인해주세요.");
     while (1)
       ;
-  }
+  }*/
 
   speed = 125;
   sm.setSpeed(speed);
@@ -133,6 +133,8 @@ void correction(int cmd) {
 }
 
 void loop() { 
+
+  Serial.println(get_Z());
 
   if (BTSerial.available()) {
     data = BTSerial.read();
