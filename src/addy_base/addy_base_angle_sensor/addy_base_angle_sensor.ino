@@ -76,12 +76,17 @@ void setup() {
   Wire.endTransmission();
 }
 
-int16_t offset[3] = {-22, 15, -12};
+int16_t offset[3] = {32, 15, -12};
 
 int get_Z() {
   uint8_t i;
-  static int16_t gyro_raw[3]={0,};
-
+  static int16_t acc_raw[3]={0,}, gyro_raw[3]={0,};
+  // Get Accel
+  Wire.beginTransmission(0x68);
+  Wire.write(59);
+  Wire.endTransmission();
+  Wire.requestFrom(0x68, 6);
+  for(i = 0; i < 3; i++) acc_raw[i] = (Wire.read() << 8) | Wire.read();
   // Get Gyro
   Wire.beginTransmission(0x68);
   Wire.write(67);
@@ -99,15 +104,21 @@ int get_Z() {
   for(i = 0; i < 3; i++) gyro_rate[i] = gyro_raw[i] / 16.4 * dt;
   // Calculate
   static float angle[3]={0,}, vec;
-
+  vec = sqrt(pow(acc_raw[0], 2) + pow(acc_raw[2], 2));
+  angle[0] = (angle[0] + gyro_rate[0]) * 0.98
+    + atan2(acc_raw[1], vec) * RAD_TO_DEG * 0.02;
+  vec = sqrt(pow(acc_raw[1], 2) + pow(acc_raw[2], 2));
+  angle[1] = (angle[1] - gyro_rate[1]) * 0.98
+    + atan2(acc_raw[0], vec) * RAD_TO_DEG * 0.02;
   // Serial print
   angle[2] += gyro_rate[2];
-  char ang_z[10];
+  char str[50], a1[10], a2[10], a3[10];
+  dtostrf(angle[0], 4, 3, a1);
+  dtostrf(angle[1], 4, 3, a2);
+  dtostrf(angle[2], 4, 3, a3);
 
-  dtostrf(angle[2], 4, 3, ang_z);
-  
+  return atoi(a1);
 
-  return atoi(ang_z);
 }
 
 void correction(int cmd) {
@@ -118,11 +129,11 @@ void correction(int cmd) {
 
   delta = 10;
   if (cmd == 2 || cmd == 8) {
-    if (z_ang > 5){
+    if (z_ang > 1){
       sm.setSpeed(2, speed + delta);
       sm.setSpeed(3, speed - delta);
     }
-    else if(z_ang < -5) {
+    else if(z_ang < -1) {
       sm.setSpeed(2, speed - delta);
       sm.setSpeed(3, speed + delta);
     }
@@ -132,11 +143,11 @@ void correction(int cmd) {
     }
   }
     if (cmd == 4 || cmd == 6) {
-    if (z_ang > 5){
+    if (z_ang > 1){
       sm.setSpeed(4, speed + delta);
       sm.setSpeed(1, speed - delta);
     }
-    else if(z_ang < -5) {
+    else if(z_ang < -1) {
       sm.setSpeed(4, speed - delta);
       sm.setSpeed(1, speed + delta);
     }
@@ -164,7 +175,7 @@ void correction(int cmd) {
 void loop() { 
   int test = get_Z();
 
-  unsigned long currentMillis = millis();
+  /*unsigned long currentMillis = millis();
   int sv = analogRead(A0);
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
@@ -197,7 +208,7 @@ void loop() {
     correction(cmd);
 
     sm.moveTo(cmd);
-  }
+  }*/
   
   if (Serial.available() > 0) {
     String receivedData = Serial.readString();
@@ -206,12 +217,11 @@ void loop() {
     int cmd = data - 48;
 
     correction(cmd);
-
     sm.moveTo(cmd);
   }
 
 
-  Serial.print("Temperature: ");
+  /*Serial.print("Temperature: ");
   Serial.print(temp);
   Serial.print("°C , Humidity: ");
   Serial.print(humi);
@@ -220,7 +230,7 @@ void loop() {
   Serial.print("ppm , PM10: ");
   Serial.print(dustDensity);
   Serial.print(" ug/m3");
-  Serial.print(", ");
+  Serial.print(", ");*/
   Serial.println(test);
-
+                                                       
 }
