@@ -36,7 +36,7 @@ class Sensor(QThread):
                     
     def stop(self):
         self.running = False
-        #self.py_serial.close()
+        self.py_serial.close()
     
     def send_serial_data(self, data):
         # Send data to the serial port
@@ -125,6 +125,7 @@ class WindowClass(QMainWindow, from_class):
         self.btncmd_7.clicked.connect(self.cmd_7)
         self.btncmd_8.clicked.connect(self.cmd_8)
         self.btncmd_9.clicked.connect(self.cmd_9)
+        self.btncmd_emer.clicked.connect(self.cmd_emer)
         
                 
         self.row_count_1 = self.status_1.rowCount()
@@ -159,6 +160,11 @@ class WindowClass(QMainWindow, from_class):
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
         self.image_loader_thread.start()
+
+    def cmd_emer(self) :
+        self.sensor_thread.running = False
+        self.sensor_thread.stop()
+        print("hi")
 
     def load_marker_image(self, marker_index):
         if 0 <= marker_index < len(self.image_loader_thread.image_paths):
