@@ -13,6 +13,8 @@ float humi, temp;
 unsigned long previousMillis = 0;
 const long interval = 500; // 5 seconds
 
+float angle[3]={0,}, vec;
+
 int Vo = A1;
 int V_LED = 2;  
 
@@ -76,7 +78,7 @@ void setup() {
   Wire.endTransmission();
 }
 
-int16_t offset[3] = {32, 15, -12};
+int16_t offset[3] = {32, 15, -15};
 
 int get_Z() {
   uint8_t i;
@@ -103,7 +105,6 @@ int get_Z() {
   float gyro_rate[3];
   for(i = 0; i < 3; i++) gyro_rate[i] = gyro_raw[i] / 16.4 * dt;
   // Calculate
-  static float angle[3]={0,}, vec;
   vec = sqrt(pow(acc_raw[0], 2) + pow(acc_raw[2], 2));
   angle[0] = (angle[0] + gyro_rate[0]) * 0.98
     + atan2(acc_raw[1], vec) * RAD_TO_DEG * 0.02;
@@ -117,7 +118,7 @@ int get_Z() {
   dtostrf(angle[1], 4, 3, a2);
   dtostrf(angle[2], 4, 3, a3);
 
-  return atoi(a1);
+  return atoi(a3);
 
 }
 
@@ -171,11 +172,25 @@ void correction(int cmd) {
     sm.setSpeed(speed);
   }*/
 }
+void resetAngle() {
+  Serial.println("Resetting Angle!");
+  for (int i = 0; i < 3; i++) {
+    angle[i] = 0;
+  }
+}
 
 void loop() { 
   int test = get_Z();
 
-  /*unsigned long currentMillis = millis();
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+
+    if (input.equals("4")) {
+      resetAngle();
+    }
+  }
+  unsigned long currentMillis = millis();
   int sv = analogRead(A0);
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
@@ -197,30 +212,7 @@ void loop() {
       Serial.println("Failed to read from DHT Sensor!!");
       return;
     }
-    
-
   }
-
-  if (BTSerial.available()) {
-    data = BTSerial.read();
-    int cmd = atoi(data) - 48;
-
-    correction(cmd);
-
-    sm.moveTo(cmd);
-  }*/
-  
-  if (Serial.available() > 0) {
-    String receivedData = Serial.readString();
-    int data = receivedData.charAt(0); // 첫 번째 문자를 가져옴
-    
-    int cmd = data - 48;
-
-    correction(cmd);
-    sm.moveTo(cmd);
-  }
-
-
   /*Serial.print("Temperature: ");
   Serial.print(temp);
   Serial.print("°C , Humidity: ");
@@ -231,6 +223,17 @@ void loop() {
   Serial.print(dustDensity);
   Serial.print(" ug/m3");
   Serial.print(", ");*/
+
+  Serial.print("Temperature: ");
+  Serial.print(0);
+  Serial.print("°C , Humidity: ");
+  Serial.print(0);
+  Serial.print("%, CO2: ");
+  Serial.print(0);
+  Serial.print("ppm , PM10: ");
+  Serial.print(0);
+  Serial.print(" ug/m3");
+  Serial.print(", ");
   Serial.println(test);
-                                                       
+
 }
