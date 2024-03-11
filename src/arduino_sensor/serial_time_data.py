@@ -17,25 +17,21 @@ pm10_levels = []
 
 ser = serial.Serial(serial_port, baud_rate)
 
-# Danger 메시지 표시 관련 변수
 show_danger = False
 last_danger_time = None
 
-# 환기 필요 메시지 표시 관련 변수
 show_ventilation = False
 last_ventilation_time = None
 
-# AQI 범위 및 레이블
+show_dry_air_message = False
+last_dry_air_time = None
+
 aqi_bins = [0, 50, 100, 250, 500]
 aqi_labels = ['Good', 'Moderate', 'Unhealthy', 'Very Unhealthy']
 
-# 메시지 카운터 변수 초기화
-warning_count = 0
-danger_count = 0
-ventilation_count = 0
 
 def update_data(frame):
-    global timestamps, temperatures, humidities, co2_levels, pm10_levels, show_danger, last_danger_time, show_ventilation, last_ventilation_time
+    global timestamps, temperatures, humidities, co2_levels, pm10_levels, show_danger, last_danger_time, show_ventilation, last_ventilation_time, show_dry_air_message, last_dry_air_time
 
     try:
         line = ser.readline().decode('utf-8').rstrip()
@@ -48,7 +44,6 @@ def update_data(frame):
         return
 
     try:
-        # 데이터를 파싱하여 각 변수에 저장
         data = line.split(",")
         if len(data) < 2:
             print("Insufficient data. Skipping line.")
@@ -60,25 +55,12 @@ def update_data(frame):
         pm10 = float(data[3].split(":")[1].strip().split()[0]) 
         timestamp = datetime.now()
 
-        # 데이터를 리스트에 추가
         timestamps.append(timestamp)
         temperatures.append(temp)
         humidities.append(humidity)
         co2_levels.append(co2)
         pm10_levels.append(pm10)
     
-        # 각 메시지의 횟수 카운트
-        global warning_count, danger_count, ventilation_count
-
-        if pm10 >= 150 and pm10 < 300:
-            warning_count += 1
-        elif pm10 >= 300:
-            danger_count += 1
-            show_danger = True
-            last_danger_time = time.time()
-        elif co2 > 1000:
-            ventilation_count += 1
-
         # Danger 메시지 표시 관리
         if show_danger and time.time() - last_danger_time > 3:
             show_danger = False
@@ -90,14 +72,16 @@ def update_data(frame):
         elif show_ventilation and time.time() - last_ventilation_time > 3:
             show_ventilation = False
 
+        # 건조한 공기 메시지 표시 관리
         if humidity <= 35:
-            plt.text(0.5, 0.95, "공기가 건조합니다!", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=12, color='green')
+            show_dry_air_message = True
+            last_dry_air_time = time.time()
+        elif show_dry_air_message and time.time() - last_dry_air_time > 5:
+            show_dry_air_message = False
 
-        # AQI 계산
         aqi = calculate_aqi(pm10)
         status, color = get_aqi_status(aqi)
 
-        # 그래프 업데이트
         ax.clear()
         ax.plot(timestamps, temperatures, label='Temperature (°C)')
         ax.plot(timestamps, humidities, label='Humidity (%)')
@@ -107,25 +91,24 @@ def update_data(frame):
         ax.set_xlabel('Time', fontweight='bold', fontsize='12')
         ax.set_ylabel('Value', fontweight='bold', fontsize='12')
         ax.set_title('Sensor Data Over Time', fontweight='bold', fontsize='18')
+        ax.set_facecolor('ivory')
 
-        # AQI 상태 텍스트 추가 (그래프 바깥)
-        plt.text(0.89, 1.025, f'AQI : {aqi} ({status})', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontweight='bold', fontsize=12, color=color)
+        plt.text(0.03, 1.025, 'AQI : ', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontweight='bold', fontsize=12)
+        plt.text(0.15, 1.025, f'{aqi} ({status})', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontweight='bold', fontsize=12, color=color)
 
-        # 메시지 표시
-        plt.text(0.01, 1.13, f"주의: {warning_count}", horizontalalignment='left', verticalalignment='center', transform=ax.transAxes, fontsize=10, color='orange')
-        plt.text(0.01, 1.08, f"위험: {danger_count}", horizontalalignment='left', verticalalignment='center', transform=ax.transAxes, fontsize=10, color='red')
-        plt.text(0.01, 1.03, f"환기 필요: {ventilation_count}", horizontalalignment='left', verticalalignment='center', transform=ax.transAxes, fontsize=10, color='blue')
 
-        # 그래프 표시
-        ax.axhspan(300, 400, color='pink', alpha=0.5)  # 400~500 강조 영역을 핑크색으로 직사각형 그리기
-        ax.legend()
-        ax.grid(True)
+        ax.axhspan(300, 400, color='pink', alpha=0.5)  
+        fig.legend(loc='upper right', bbox_to_anchor=(0.91, 1.00))  
+        ax.grid(True, linestyle='--', linewidth=0.5, color='rosybrown')
         ax.tick_params(axis='x', rotation=45)
+
         # 주의 및 위험 메시지 표시
         if show_danger:
             ax.text(0.5, 0.5, "주의: 미세먼지 농도가 높습니다.", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=12, color='orange')
         elif show_ventilation:
             ax.text(0.5, 0.5, "환기 필요: CO2 농도가 높습니다!", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=12, color='blue')
+        elif show_dry_air_message:
+            ax.text(0.5, 0.95, "공기가 건조합니다!", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=12, color='green')
 
     except ValueError as e:
         print("Error parsing data:", e)
@@ -136,7 +119,7 @@ def update_data(frame):
     
 # AQI 계산 함수
 def calculate_aqi(pm10):
-    return round(((100 - 51) / (80 - 31)) * (pm10 - 31) + 51, 2)
+    return round(((100 - 51) / (80 - 31)) * (pm10 - 31) + 51, 2) 
 
 def get_aqi_status(aqi):
     if aqi <= 50:
@@ -147,6 +130,7 @@ def get_aqi_status(aqi):
         return 'Unhealthy', 'red'  # Unhealthy
     else:
         return 'Very Unhealthy', 'purple'  # Very Unhealthy
+
 
 fig, ax = plt.subplots(figsize=(10, 8))
 
