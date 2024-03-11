@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <widget class="QLabel" name="map">
    <property name="geometry">
     <rect>
@@ -86,7 +89,7 @@
     <rect>
      <x>320</x>
      <y>150</y>
-     <width>20</width>
+     <width>21</width>
      <height>201</height>
     </rect>
    </property>
@@ -141,6 +144,9 @@
      <width>61</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(255, 255, 255);</string>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -305,33 +311,33 @@
      <rect>
       <x>20</x>
       <y>30</y>
-      <width>641</width>
+      <width>701</width>
       <height>51</height>
      </rect>
     </property>
     <column>
      <property name="text">
-      <string>date</string>
+      <string>Date</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>temp</string>
+      <string>Temperature (°C)</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>hum</string>
+      <string>Humidity (%)</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>co2</string>
+      <string>Co2 (ppm)</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>dust</string>
+      <string>PM-10 (μg/m3)</string>
      </property>
     </column>
     <column>
@@ -345,12 +351,12 @@
      <rect>
       <x>20</x>
       <y>90</y>
-      <width>591</width>
+      <width>681</width>
       <height>311</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="place_1">
      <attribute name="title">
@@ -361,33 +367,33 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
+        <width>681</width>
         <height>281</height>
        </rect>
       </property>
       <column>
        <property name="text">
-        <string>date</string>
+        <string>Date</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>temp</string>
+        <string>Temperature (°C)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>hum</string>
+        <string>Humidity (%)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>co2</string>
+        <string>Co2 (ppm)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>dust</string>
+        <string>PM-10 (μg/m3)</string>
        </property>
       </column>
      </widget>
@@ -401,33 +407,33 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
+        <width>681</width>
         <height>281</height>
        </rect>
       </property>
       <column>
        <property name="text">
-        <string>date</string>
+        <string>Date</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>temp</string>
+        <string>Temperature (°C)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>hum</string>
+        <string>Humidity (%)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>co2</string>
+        <string>Co2 (ppm)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>dust</string>
+        <string>PM-10 (μg/m3)</string>
        </property>
       </column>
      </widget>
@@ -441,33 +447,33 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
+        <width>681</width>
         <height>281</height>
        </rect>
       </property>
       <column>
        <property name="text">
-        <string>date</string>
+        <string>Date</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>temp</string>
+        <string>Temperature (°C)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>hum</string>
+        <string>Humidity (%)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>co2</string>
+        <string>Co2 (ppm)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>dust</string>
+        <string>PM-10 (μg/m3)</string>
        </property>
       </column>
      </widget>
@@ -481,33 +487,33 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
+        <width>681</width>
         <height>281</height>
        </rect>
       </property>
       <column>
        <property name="text">
-        <string>date</string>
+        <string>Date</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>temp</string>
+        <string>Temperature (°C)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>hum</string>
+        <string>Humidity (%)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>co2</string>
+        <string>Co2 (ppm)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>dust</string>
+        <string>PM-10 (μg/m3)</string>
        </property>
       </column>
      </widget>
@@ -521,33 +527,33 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
+        <width>681</width>
         <height>281</height>
        </rect>
       </property>
       <column>
        <property name="text">
-        <string>date</string>
+        <string>Date</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>temp</string>
+        <string>Temperature (°C)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>hum</string>
+        <string>Humidity (%)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>co2</string>
+        <string>Co2 (ppm)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>dust</string>
+        <string>PM-10 (μg/m3)</string>
        </property>
       </column>
      </widget>
@@ -556,9 +562,9 @@
    <widget class="QLineEdit" name="feedback">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>710</x>
       <y>100</y>
-      <width>261</width>
+      <width>171</width>
       <height>41</height>
      </rect>
     </property>
@@ -572,7 +578,7 @@
    <widget class="QPushButton" name="btnExport">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>710</x>
       <y>150</y>
       <width>51</width>
       <height>41</height>
@@ -585,7 +591,7 @@
    <widget class="QPushButton" name="btnReset">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>710</x>
       <y>200</y>
       <width>51</width>
       <height>41</height>
@@ -598,7 +604,7 @@
    <widget class="QPushButton" name="btnplot">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>730</x>
       <y>30</y>
       <width>51</width>
       <height>41</height>
@@ -611,7 +617,7 @@
    <widget class="QLabel" name="label_z">
     <property name="geometry">
      <rect>
-      <x>770</x>
+      <x>810</x>
       <y>40</y>
       <width>67</width>
       <height>17</height>
@@ -816,6 +822,19 @@
      <string>↙</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="btncmd_5">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>100</y>
+      <width>51</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>■</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QPushButton" name="test">
    <property name="geometry">
@@ -882,7 +901,7 @@
     <string>test_5</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="btncmd_5">
+  <widget class="QPushButton" name="btncmd_emer">
    <property name="geometry">
     <rect>
      <x>980</x>
@@ -897,7 +916,8 @@
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(255, 0, 0);</string>
+    <string notr="true">background-color: rgb(255, 255, 0);
+border: 10px solid red; border-radius: 10px;</string>
    </property>
    <property name="text">
     <string>Emergency Stop</string>
