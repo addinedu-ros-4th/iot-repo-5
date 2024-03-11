@@ -29,7 +29,7 @@ void setup() {
   Wire.write(0);
   Wire.endTransmission();
 }
-int16_t offset[3] = {-22, 15, -20};
+int16_t offset[3] = {-22, 15, -12};
 
 int get_Z() {
   uint8_t i;
