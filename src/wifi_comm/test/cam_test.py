@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import socket
 
-SERVER_IP = '192.168.101.6'
+SERVER_IP = ''
 PORT = 81
 esp_url = f"http://{SERVER_IP}:{PORT}/stream"
 cap = cv2.VideoCapture(esp_url)

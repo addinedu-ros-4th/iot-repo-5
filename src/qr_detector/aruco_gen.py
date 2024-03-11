@@ -20,8 +20,8 @@ if __name__ == "__main__":
     # plt.show()
 
     # 마커 생성 및 저장
-    for i in range(5): 
+    for i in range(10): 
         marker_id = i
         marker_image = aruco.generateImageMarker(aruco_dict, marker_id, marker_size)
         
-        cv2.imwrite(f"./test/marker_{marker_id}.png", marker_image)
+        cv2.imwrite(f"marker_{marker_id}.png", marker_image)
