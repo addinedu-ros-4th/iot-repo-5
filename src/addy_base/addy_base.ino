@@ -1,4 +1,4 @@
-#include "Addy_SmartMobility.h"
+#include "./Addy_SmartMobility.h"
 #include <SoftwareSerial.h>
 
 Addy_SmartMobility sm = Addy_SmartMobility();
