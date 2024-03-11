@@ -14,7 +14,22 @@ ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
 with open(CSV_FILE_PATH, mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['Date', 'Temperature (°C)', 'Humidity (%)', 'CO2 (PPM)', 'PM-10 (μg/m3)'])
+    writer.writerow(['Date', 'Temperature (°C)', 'Humidity (%)', 'CO2 (PPM)', 'PM-10 (μg/m3)', 'AQI', 'AQI_Bucket'])
+
+# AQI 계산 함수
+def calculate_aqi(pm10):
+    return round(((100 - 51) / (80 - 31)) * (pm10 - 31) + 51, 2)
+
+# AQI 상태 가져오기
+def get_aqi_status(aqi):
+    if aqi <= 50:
+        return 'Good'
+    elif aqi <= 100:
+        return 'Moderate'
+    elif aqi <= 250:
+        return 'Unhealthy'
+    else:
+        return 'Very Unhealthy'
 
 try:
     while True:
@@ -33,11 +48,17 @@ try:
                 co2 = match.group(3)
                 pm10 = match.group(4)
                 
+                # AQI 계산
+                aqi = calculate_aqi(float(pm10))
+                
+                # AQI 상태 가져오기
+                aqi_status = get_aqi_status(aqi)
+                
                 with open(CSV_FILE_PATH, mode='a', newline='') as file:
                     writer = csv.writer(file)
-                    writer.writerow([current_time, temperature, humidity, co2, pm10])
+                    writer.writerow([current_time, temperature, humidity, co2, pm10, aqi, aqi_status])
                 
-                print("Data received and saved:", current_time, temperature, humidity, co2, pm10)
+                print("Data received and saved:", current_time, temperature, humidity, co2, pm10, aqi, aqi_status)
             else:
                 print("Invalid data received:", data)
             
@@ -45,6 +66,3 @@ try:
 except KeyboardInterrupt:
     ser.close()
     print("Serial connection closed.")
-
-
-
