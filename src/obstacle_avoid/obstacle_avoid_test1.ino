@@ -1,8 +1,8 @@
 
-#include <Kocoafab_SmartMobility.h>
+#include "./Addy_SmartMobility.h"
 #include <SoftwareSerial.h>
 
-Kocoafab_SmartMobility amr = Kocoafab_SmartMobility();
+Addy_SmartMobility amr = Addy_SmartMobility();
 // SoftwareSerial BTSerial(4, 5);
 
 const int trigPinFront = 2;  // 앞
