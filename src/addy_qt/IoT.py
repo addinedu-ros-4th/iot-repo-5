@@ -11,7 +11,7 @@ import re
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from_class = uic.loadUiType("IoT_test.ui")[0]
+from_class = uic.loadUiType("IoT.ui")[0]
 import pandas as pd
 #import atexit
 class Sensor(QThread):
@@ -36,7 +36,7 @@ class Sensor(QThread):
                     
     def stop(self):
         self.running = False
-        self.py_serial.close()
+        #self.py_serial.close()
         
     def send_serial_data(self, data):
         # Send data to the serial port
@@ -84,12 +84,20 @@ class WindowClass(QMainWindow, from_class):
         self.test_3.clicked.connect(self.Add_3)
         self.test_4.clicked.connect(self.Add_4)
         self.test_5.clicked.connect(self.Add_5)
-        self.btnSensor.clicked.connect(self.clickSensor)
+        #self.btnSensor.clicked.connect(self.clickSensor)
         self.btnExport.clicked.connect(self.exportTable)
         self.btnReset.clicked.connect(self.reset)
         
+        self.btncmd_1.clicked.connect(self.cmd_1)
         self.btncmd_2.clicked.connect(self.cmd_2)
+        self.btncmd_3.clicked.connect(self.cmd_3)
+        self.btncmd_4.clicked.connect(self.cmd_4)
+        self.btncmd_5.clicked.connect(self.cmd_5)
+        self.btncmd_6.clicked.connect(self.cmd_6)
+        self.btncmd_7.clicked.connect(self.cmd_7)
         self.btncmd_8.clicked.connect(self.cmd_8)
+        self.btncmd_9.clicked.connect(self.cmd_9)
+        
                 
         self.row_count_1 = self.status_1.rowCount()
         self.row_count_2 = self.status_2.rowCount()
@@ -117,15 +125,54 @@ class WindowClass(QMainWindow, from_class):
         self.aqi_labels = ['Good', 'Moderate', 'Unhealthy', 'Very Unhealthy']
         self.data = []
 
+        self.sensor_thread.running = True
+        self.sensor_thread.start()
+
+    def cmd_1(self):
+        print('hi')
+        data_to_send = "1"
+        self.sensor_thread.send_serial_data(data_to_send)
+        
     def cmd_2(self):
         print('hi')
         data_to_send = "2"
+        self.sensor_thread.send_serial_data(data_to_send)
+
+    def cmd_3(self):
+        print('hi')
+        data_to_send = "3"
+        self.sensor_thread.send_serial_data(data_to_send)
+        
+    def cmd_4(self):
+        print('hi')
+        data_to_send = "4"
+        self.sensor_thread.send_serial_data(data_to_send)
+
+    def cmd_5(self):
+        print('hi')
+        data_to_send = "5"
+        self.sensor_thread.send_serial_data(data_to_send)
+        
+    def cmd_6(self):
+        print('hi')
+        data_to_send = "6"
+        self.sensor_thread.send_serial_data(data_to_send)
+
+    def cmd_7(self):
+        print('hi')
+        data_to_send = "7"
         self.sensor_thread.send_serial_data(data_to_send)
         
     def cmd_8(self):
         print('hi')
         data_to_send = "8"
         self.sensor_thread.send_serial_data(data_to_send)
+
+    def cmd_9(self):
+        print('hi')
+        data_to_send = "9"
+        self.sensor_thread.send_serial_data(data_to_send)
+
 
     def update_data(self, frame):
 
@@ -223,13 +270,14 @@ class WindowClass(QMainWindow, from_class):
         self.status_4.setRowCount(0)
         self.status_5.setRowCount(0)
 
-    def clickSensor(self):
+    """def clickSensor(self):
         if self.isSensorOn == False:
             self.btnSensor.setText("Sensor off")
             self.isSensorOn = True
             self.SensorStart()
         else :
             self.btnSensor.setText('Sensor on')
+            
             self.isSensorOn = False
             self.SensorStop()
 
@@ -240,14 +288,15 @@ class WindowClass(QMainWindow, from_class):
     def SensorStop(self):
         self.sensor_thread.running = False
         
-        """try:
+        try:
             #atexit.register(self.sensor_thread.py_serial.close())
             self.sensor_thread.py_serial.close()
         except Exception as e:
             print(e)"""
-            
+    
         
     def handle_sensor_data(self, line):       
+        temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
         
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  
         if not line.startswith("Temperature:"):
@@ -257,21 +306,27 @@ class WindowClass(QMainWindow, from_class):
         humidity = float(data[1].split(":")[1].strip().replace("%", ""))
         co2 = int(data[2].split(":")[1].strip().replace("ppm", ""))
         pm10 = float(data[3].split(":")[1].strip().replace("ug/m3", ""))"""
-        if len(self.data) >= 4:
+        
+        if len(self.data) >= 5:
             # Temperature
-            temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
-            
-            # Humidity
-            humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
-            
-            # CO2
-            co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
-            
-            # PM10
-            pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
+            try :
+                temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
+                
+                # Humidity
+                humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
+                
+                # CO2
+                co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
+                
+                # PM10
+                pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
+                
+                z_ang = float(self.data[4])
+            except :
+                print("Sensor Error")
         else:
         # 기본값 할당
-            temp, humidity, co2, pm10 = 0.0, 0.0, 0, 0.0
+            temp, humidity, co2, pm10,  z_ang= 0.0, 0.0, 0, 0.0, 0
 
         self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
         self.LiveStatus.setItem(0, 1, QTableWidgetItem(str(temp)))
@@ -279,7 +334,8 @@ class WindowClass(QMainWindow, from_class):
         self.LiveStatus.setItem(0, 3, QTableWidgetItem(str(co2)))
         self.LiveStatus.setItem(0, 4, QTableWidgetItem(str(pm10)))
         self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
-        
+        self.label_z.setText("Z : {}".format(z_ang))
+
         aqi = self.calculate_aqi(pm10)
         status = self.get_aqi_status(aqi)
         
@@ -414,4 +470,6 @@ if __name__ == "__main__":
     
     myWindows.show()
     
+    
     sys.exit(app.exec_())
+    
