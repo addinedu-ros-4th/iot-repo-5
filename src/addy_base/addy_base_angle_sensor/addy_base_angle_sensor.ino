@@ -8,6 +8,7 @@
 #define DHTTYPE DHT11
 
 DHT dht(DHTPIN, DHTTYPE);
+float humi, temp;
 
 unsigned long previousMillis = 0;
 const long interval = 500; // 5 seconds
@@ -75,7 +76,7 @@ void setup() {
   Wire.endTransmission();
 }
 
-int16_t offset[3] = {-22, 15, -20};
+int16_t offset[3] = {-22, 15, -12};
 
 int get_Z() {
   uint8_t i;
@@ -117,11 +118,11 @@ void correction(int cmd) {
 
   delta = 10;
   if (cmd == 2 || cmd == 8) {
-    if (z_ang > 1){
+    if (z_ang > 5){
       sm.setSpeed(2, speed + delta);
       sm.setSpeed(3, speed - delta);
     }
-    else if(z_ang < -1) {
+    else if(z_ang < -5) {
       sm.setSpeed(2, speed - delta);
       sm.setSpeed(3, speed + delta);
     }
@@ -131,11 +132,11 @@ void correction(int cmd) {
     }
   }
     if (cmd == 4 || cmd == 6) {
-    if (z_ang > 1){
+    if (z_ang > 5){
       sm.setSpeed(4, speed + delta);
       sm.setSpeed(1, speed - delta);
     }
-    else if(z_ang < -1) {
+    else if(z_ang < -5) {
       sm.setSpeed(4, speed - delta);
       sm.setSpeed(1, speed + delta);
     }
@@ -161,13 +162,13 @@ void correction(int cmd) {
 }
 
 void loop() { 
-  //Serial.println(get_Z());
+  int test = get_Z();
+
   unsigned long currentMillis = millis();
   int sv = analogRead(A0);
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    float humi, temp;
     temp = dht.readTemperature();
     humi = dht.readHumidity();
 
@@ -186,15 +187,7 @@ void loop() {
       return;
     }
     
-    Serial.print("Temperature: ");
-    Serial.print(temp);
-    Serial.print("°C , Humidity: ");
-    Serial.print(humi);
-    Serial.print("%, CO2: ");
-    Serial.print(sv);
-    Serial.print("ppm , PM10: ");
-    Serial.print(dustDensity);
-    Serial.println(" ug/m3");
+
   }
 
   if (BTSerial.available()) {
@@ -216,7 +209,18 @@ void loop() {
 
     sm.moveTo(cmd);
   }
-  
-  
+
+
+  Serial.print("Temperature: ");
+  Serial.print(temp);
+  Serial.print("°C , Humidity: ");
+  Serial.print(humi);
+  Serial.print("%, CO2: ");
+  Serial.print(sv);
+  Serial.print("ppm , PM10: ");
+  Serial.print(dustDensity);
+  Serial.print(" ug/m3");
+  Serial.print(", ");
+  Serial.println(test);
 
 }
