@@ -37,11 +37,39 @@ class Sensor(QThread):
     def stop(self):
         self.running = False
         #self.py_serial.close()
-        
+    
     def send_serial_data(self, data):
         # Send data to the serial port
         encoded_data = data.encode('utf-8')
         self.py_serial.write(encoded_data)
+
+class ImageLoaderThread(QThread):
+    update_signal = pyqtSignal(QPixmap)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.running = True
+        self.image_paths = ["../qr_detector/test/marker_0.png", "../qr_detector/test/marker_1.png",
+                            "../qr_detector/test/marker_2.png", "../qr_detector/test/marker_3.png",
+                            "../qr_detector/test/marker_4.png"]
+
+    def run(self):
+        while self.running:
+            time.sleep(1)  # 1초마다 이미지 업데이트
+
+    def load_image(self, path):
+        try:
+            pixmap = QPixmap(path)
+            if not pixmap.isNull():
+                return pixmap
+        except Exception as e:
+            print(f"Error loading image: {e}")
+        return None
+
+    def stop(self):
+        self.running = False
+        self.quit()
+
 
 class WindowClass(QMainWindow, from_class):
     def __init__(self):
@@ -51,9 +79,10 @@ class WindowClass(QMainWindow, from_class):
         self.place = "0"
         # 첫 번째 컬럼 크기 설정
         self.LiveStatus.horizontalHeader().resizeSection(0, 150)
+        self.LiveStatus.horizontalHeader().resizeSection(5, 30)
 
         # 나머지 컬럼은 Stretch 모드로 자동 조절
-        for i in range(1, self.LiveStatus.horizontalHeader().count()):
+        for i in range(1, self.LiveStatus.horizontalHeader().count()-1):
             self.LiveStatus.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
             
         self.status_1.horizontalHeader().resizeSection(0, 150)
@@ -84,7 +113,6 @@ class WindowClass(QMainWindow, from_class):
         self.test_3.clicked.connect(self.Add_3)
         self.test_4.clicked.connect(self.Add_4)
         self.test_5.clicked.connect(self.Add_5)
-        #self.btnSensor.clicked.connect(self.clickSensor)
         self.btnExport.clicked.connect(self.exportTable)
         self.btnReset.clicked.connect(self.reset)
         
@@ -127,6 +155,21 @@ class WindowClass(QMainWindow, from_class):
 
         self.sensor_thread.running = True
         self.sensor_thread.start()
+        
+        self.image_loader_thread = ImageLoaderThread(self)
+        self.image_loader_thread.update_signal.connect(self.update_camera_image)
+        self.image_loader_thread.start()
+
+    def load_marker_image(self, marker_index):
+        if 0 <= marker_index < len(self.image_loader_thread.image_paths):
+            image_path = self.image_loader_thread.image_paths[marker_index]
+            pixmap = self.image_loader_thread.load_image(image_path)
+            if pixmap:
+                self.image_loader_thread.update_signal.emit(pixmap)
+
+    def update_camera_image(self, pixmap):
+        self.camera.setPixmap(pixmap)
+        self.camera.setAlignment(Qt.AlignCenter)
 
     def cmd_1(self):
         print('hi')
@@ -352,7 +395,7 @@ class WindowClass(QMainWindow, from_class):
         self.place = "1"
 
         self.changeQR1Color()
-
+        self.load_marker_image(0) 
 
     def Add_2(self):
         self.status_2.insertRow(self.row_count_2)
@@ -365,6 +408,7 @@ class WindowClass(QMainWindow, from_class):
 
         
         self.changeQR2Color()
+        self.load_marker_image(1) 
 
         
     def Add_3(self):
@@ -378,6 +422,7 @@ class WindowClass(QMainWindow, from_class):
 
         
         self.changeQR3Color()
+        self.load_marker_image(2) 
 
         
     def Add_4(self):
@@ -389,8 +434,8 @@ class WindowClass(QMainWindow, from_class):
         self.status_4.setItem(self.row_count_4, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
         self.place = "4"
 
-        
         self.changeQR4Color()
+        self.load_marker_image(3) 
 
     def Add_5(self):
         self.status_5.insertRow(self.row_count_5)
@@ -403,6 +448,7 @@ class WindowClass(QMainWindow, from_class):
 
         
         self.changeQR5Color()
+        self.load_marker_image(4) 
 
 
 
