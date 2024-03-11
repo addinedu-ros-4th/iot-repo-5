@@ -14,8 +14,8 @@
 #define CAMERA_MODEL_AI_THINKER  // Has PSRAM
 #include "camera_pins.h"
 
-const char* ssid = "";
-const char* password = "!";
+const char* ssid = "AIE_509_2.4G";
+const char* password = "addinedu_class1";
 
 void startCameraServer();
 void setupLedFlash(int pin);
@@ -99,7 +99,7 @@ void setup() {
     s->set_framesize(s, FRAMESIZE_QVGA);
   }
 
-  s->set_quality(s, 30);
+  s->set_quality(s, 60);
   s->set_hmirror(s, 1);
   s->set_vflip(s, 1);
 
@@ -116,6 +116,7 @@ void setup() {
 #if defined(LED_GPIO_NUM)
   setupLedFlash(LED_GPIO_NUM);
 #endif
+
 
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
@@ -136,5 +137,6 @@ void setup() {
 
 void loop() {
   // Do nothing. Everything is done in another task by the web server
-  delay(10000);
+  // delay(10000);
+  delay(500);
 }
