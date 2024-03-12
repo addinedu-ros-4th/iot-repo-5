@@ -22,6 +22,11 @@ struct Sensors {
   int sv;
 };
 
+float humi_val = 0.0;
+float temp_val = 0.0;
+float dust_val = 0.0;
+int sv_val = 0;
+
 #define DHTPIN 10
 #define DHTTYPE DHT11
 
@@ -87,27 +92,23 @@ void setup() {
   addy.moveTo(5);
 }
 
-
-
 void loop() {
   unsigned long currentMillis = millis();
   uint8_t buffer[256] = { 0 };
-  int sv = analogRead(A4);
   int z_val = get_Z();
 
   Sensors sensors;
-  float humi_val, temp_val, dust_val;
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    sensors = sensing(sv);
+    sensors = sensing();
 
-    sensors.humi = humi_val;
-    sensors.temp = temp_val;
-    sensors.sv = sv;
-    sensors.dust = dust_val;
+    humi_val = sensors.humi;
+    temp_val = sensors.temp;
+    sv_val = sensors.sv;
+    dust_val = sensors.dust;
 
-    if (isnan(sensors.humi) || isnan(sensors.temp)) {
+    if (isnan(humi_val) || isnan(temp_val)) {
       // Serial.println("Failed to read from DHT sensor!!");
       return;
     }
@@ -119,13 +120,13 @@ void loop() {
   char char_sv[10];
   char char_dust[10];
   char merge_data[100];
+  sprintf(char_humi, "%f", humi_val);
+  sprintf(char_temp, "%f", temp_val);
+  sprintf(char_sv, "%d", sv_val);
+  sprintf(char_dust, "%f", dust_val);
   sprintf(char_z_val, "%d", z_val);
-  sprintf(char_humi, "%d", sensors.humi);
-  sprintf(char_temp, "%d", sensors.temp);
-  sprintf(char_sv, "%d", sensors.sv);
-  sprintf(char_dust, "%d", sensors.dust);
 
-  sprintf(merge_data, "%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
+  sprintf(merge_data, "%s,%s,%s,%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
 
   tcp_on();
   if (tcp_status) {
@@ -148,16 +149,16 @@ void loop() {
   // Serial.println(z_val);
 
   if (cmd == 2) {
-      correction_F(z_val);
-    } else if (cmd == 8){
-      correction_B(z_val);
-    } else if (cmd == 4 || cmd == 6) {
-      correction_S(z_val);
-    }
-    if (cmd ==5){
-      resetAngle();
-    }
-    addy.moveTo(cmd);
+    correction_F(z_val);
+  } else if (cmd == 8) {
+    correction_B(z_val);
+  } else if (cmd == 4 || cmd == 6) {
+    correction_S(z_val);
+  }
+  if (cmd == 5) {
+    resetAngle();
+  }
+  addy.moveTo(cmd);
 }
 
 void tcp_on() {
@@ -406,7 +407,7 @@ void init_sensors_pinmode() {
   pinMode(echoPinRight, INPUT);
 }
 
-Sensors sensing(int sv) {
+Sensors sensing() {
   Sensors sensors;
   sensors.temp = dht.readTemperature();
   sensors.humi = dht.readHumidity();
@@ -417,6 +418,7 @@ Sensors sensing(int sv) {
   Voltage = Vo_value * 5.0 / 1024.0;
   sensors.dust = (Voltage - 0.1) / 0.005;
 
+  int sv = analogRead(A4);
   sensors.sv = sv;
   return sensors;
 }
