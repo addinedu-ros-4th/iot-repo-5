@@ -147,13 +147,17 @@ void loop() {
   // Serial.print("IMU : ");
   // Serial.println(z_val);
 
-  if (cmd == 2 || cmd == 8) {
-    correction_F(z_val);
-  } else if (cmd == 4 || cmd == 6) {
-    correction_S(z_val);
-  }
-
-  addy.moveTo(cmd);
+  if (cmd == 2) {
+      correction_F(z_val);
+    } else if (cmd == 8){
+      correction_B(z_val);
+    } else if (cmd == 4 || cmd == 6) {
+      correction_S(z_val);
+    }
+    if (cmd ==5){
+      resetAngle();
+    }
+    addy.moveTo(cmd);
 }
 
 void tcp_on() {
@@ -328,30 +332,63 @@ void resetAngle() {
 void correction_F(int z_ang) {
   int delta = 10;
 
-  if (z_ang > 3) {
+  if (z_ang > 0) {
+    addy.setSpeed(1, speed + delta);
     addy.setSpeed(2, speed + delta);
     addy.setSpeed(3, speed - delta);
-  } else if (z_ang < -3) {
+    addy.setSpeed(4, speed - delta);
+  } else if (z_ang < 0) {
+    addy.setSpeed(1, speed - delta);
     addy.setSpeed(2, speed - delta);
     addy.setSpeed(3, speed + delta);
+    addy.setSpeed(4, speed + delta);
   } else {
+    addy.setSpeed(1, speed);
     addy.setSpeed(2, speed);
     addy.setSpeed(3, speed);
+    addy.setSpeed(4, speed);
+  }
+}
+
+void correction_B(int z_ang) {
+  int delta = 10;
+
+  if (z_ang > 0) {
+    addy.setSpeed(1, speed - delta);
+    addy.setSpeed(2, speed - delta);
+    addy.setSpeed(3, speed + delta);
+    addy.setSpeed(4, speed + delta);
+  } else if (z_ang < 0) {
+    addy.setSpeed(1, speed + delta);
+    addy.setSpeed(2, speed + delta);
+    addy.setSpeed(3, speed - delta);
+    addy.setSpeed(4, speed - delta);
+  } else {
+    addy.setSpeed(1, speed);
+    addy.setSpeed(2, speed);
+    addy.setSpeed(3, speed);
+    addy.setSpeed(4, speed);
   }
 }
 
 void correction_S(int z_ang) {
   int delta = 10;
 
-  if (z_ang > 3) {
-    addy.setSpeed(4, speed + delta);
-    addy.setSpeed(1, speed - delta);
-  } else if (z_ang < -3) {
-    addy.setSpeed(4, speed - delta);
+  if (z_ang > 0) {
     addy.setSpeed(1, speed + delta);
+    addy.setSpeed(2, speed + delta);
+    addy.setSpeed(3, speed - delta);
+    addy.setSpeed(4, speed - delta);
+  } else if (z_ang < 0) {
+    addy.setSpeed(1, speed - delta);
+    addy.setSpeed(2, speed - delta);
+    addy.setSpeed(3, speed + delta);
+    addy.setSpeed(4, speed + delta);
   } else {
-    addy.setSpeed(4, speed);
     addy.setSpeed(1, speed);
+    addy.setSpeed(2, speed);
+    addy.setSpeed(3, speed);
+    addy.setSpeed(4, speed);
   }
 }
 
