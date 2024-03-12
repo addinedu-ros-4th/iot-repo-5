@@ -11,7 +11,8 @@ import re
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import socket
-
+import signal
+import json
 
 from_class = uic.loadUiType("IoT_wifi.ui")[0]
 import pandas as pd
@@ -19,37 +20,67 @@ import pandas as pd
 
 class CommunicationThread(QThread):
     received_signal = pyqtSignal(str)  # Signal to emit the received data
+    def __init__(self, parent=None):
+        super().__init__()
+        self.main = parent
+        self.running = True
+        self.server_port = 9090
+        self.max_users = 5 #maximum number of queued connections
+        self.cmd = "5"
+
+        self.connect()
+
+    def connect(self):
+        try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.bind(("192.168.0.23", self.server_port))
+            self.server_socket.listen(self.max_users)
+        except Exception as e:
+            print("ERRRORRRR::: ",e)
+
     def run(self):
         count = 0
-        your_server_port = ""
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind(('your_server_ip', your_server_port))  # Replace with your actual server IP and port
-        server_socket.listen()
+        try:
+            while self.running:
+                client_socket, client_address = self.server_socket.accept()
+                # print("Connection from ", client_address)
+                while True:
+                    data = client_socket.recv(1024)
+                    if not data:
+                        break
+                    
+                    decoded_data = data.decode()
 
-        while True:
-            client_socket, client_address = server_socket.accept()
-            print("Connection from ", client_address)
-            while True:
-                data = client_socket.recv(1024)
-                if not data:
-                    break
 
-                decoded = data.decode()
-                print(count, 'received:', decoded)
-                # send_data = "[Hi, I'm TH KIM. I got this Message.] => " + decoded
-                send_data = '5'
-                encoded_send_data = send_data.encode('utf-8')
-                sent = client_socket.send(encoded_send_data)
+                    # send_data = "[Hi, I'm TH KIM. I got this Message.] => " + decoded
+                    
+                    send_data = self.cmd
+                    encoded_send_data = send_data.encode('utf-8')
+                    sent = client_socket.send(encoded_send_data)
 
-                if sent == 0:
-                    print("Socket connection broken")
-                print(sent)
-                self.received_signal.emit(decoded)
+                    if sent == 0:
+                        print("Socket connection broken")
+                    # print(sent)
+                    self.received_signal.emit(decoded_data)
 
-            print("Disconnected")
-            client_socket.close()
-            count = count + 1
-            
+                # print("Disconnected")
+                client_socket.close()
+                count = count + 1
+
+        except Exception as e:
+            print("ERROR: ",e)
+            self.server_socket.close()
+            time.sleep(1)
+            self.connect()
+
+    def close_socket(self):
+        if hasattr(self, 'server_socket'):
+            self.server_socket.close()
+
+    def stop(self):
+        self.running = False
+        self.server_socket.close()
+    
 """class Sensor(QThread):
     update = pyqtSignal(str)  # Signal to emit the received data
 
@@ -171,8 +202,8 @@ class WindowClass(QMainWindow, from_class):
         self.row_count_5 = self.status_5.rowCount()
         self.LiveStatus.insertRow(0)
 
-        self.sensor_thread = Sensor(self)
-        self.sensor_thread.update.connect(self.handle_sensor_data)
+        # self.sensor_thread = Sensor(self)
+        # self.sensor_thread.update.connect(self.handle_sensor_data)
 
         self.cols = ['Date', 'Temperature (°C)', 'Humidity (%)', 'Co2 (ppm)', 'PM-10 (μg/m3)', 'Place']
        
@@ -191,16 +222,39 @@ class WindowClass(QMainWindow, from_class):
         self.data = []
 
         self.comm_thread = CommunicationThread()
-        self.comm_thread.received_signal.connect(lambda data: print(f"Signal received: {data}"))
+        self.comm_thread.received_signal.connect(self.parsing_data)
         self.comm_thread.start()
+        self.comm_thread.running = True
+        # self.comm_thread.update.connect(self.handle_sensor_data)
+        self.z_val = 0
         
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
         self.image_loader_thread.start()
 
+        signal.signal(signal.SIGINT, self.signal_handler)
+
+    def parsing_data(self, decoded):
+        # decoded = data.decode()
+        # print(data, type(data))
+        # print(decoded, type(decoded))
+
+        split_data = decoded.split(',')
+        self.z_val = int(split_data[0].strip())
+        test = int(split_data[1].strip())
+
+        # self.handle_sensor_data()
+
+        print(self.z_val, test)
+        z_ang = self.z_val
+        self.label_z.setText("Z : {}".format(z_ang))
+
+    def signal_handler(self, sig, frame):
+        self.comm_thread.close_socket()
+
     def cmd_emer(self) :
-        self.sensor_thread.running = False
-        self.sensor_thread.stop()
+        # self.sensor_thread.running = False
+        # self.sensor_thread.stop()
         print("hi")
 
     def load_marker_image(self, marker_index):
@@ -217,53 +271,58 @@ class WindowClass(QMainWindow, from_class):
     def cmd_1(self):
         print('hi')
         data_to_send = "1"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "1"
         
     def cmd_2(self):
         print('hi')
         data_to_send = "2"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "2"
 
     def cmd_3(self):
         print('hi')
         data_to_send = "3"
-        self.sensor_thread.send_serial_data(data_to_send)
-        
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "3"
+
     def cmd_4(self):
         print('hi')
         data_to_send = "4"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "4"
 
     def cmd_5(self):
         print('hi')
         data_to_send = "5"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "5"
         
     def cmd_6(self):
         print('hi')
         data_to_send = "6"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "6"
 
     def cmd_7(self):
         print('hi')
         data_to_send = "7"
-        self.sensor_thread.send_serial_data(data_to_send)
-        
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "7"
+
     def cmd_8(self):
         print('hi')
         data_to_send = "8"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "8"
 
     def cmd_9(self):
         print('hi')
         data_to_send = "9"
-        self.sensor_thread.send_serial_data(data_to_send)
-
-
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "9"
 
     def update_data(self, frame):
-
-
         # 데이터를 파싱하여 각 변수에 저장
         if len(self.data) >= 4:
             # Temperature
@@ -408,7 +467,8 @@ class WindowClass(QMainWindow, from_class):
                 # PM10
                 pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
                 
-                z_ang = float(self.data[4])
+                # z_ang = float(self.data[4])
+                z_ang = self.z_val
             except :
                 print("Sensor Error")
         else:
