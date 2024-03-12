@@ -1,14 +1,9 @@
 #include "ESP8266.h"
-#include <Wire.h>
 #include <SoftwareSerial.h>
-
+#include <Wire.h>
+#include <DHT.h>
+#include <DHT_U.h>
 #include "./Addy_SmartMobility.h"
-
-
-#define SSID "AIE_509_2.4G"
-#define PASSWORD "addinedu_class1"
-#define HOST_NAME "192.168.0.23"
-#define HOST_PORT (9090)
 
 enum AvoidanceState {
   NO_OBSTACLE,
@@ -20,11 +15,37 @@ enum AvoidanceState {
 };
 AvoidanceState avoidanceState = NO_OBSTACLE;
 
+struct Sensors {
+  float humi;
+  float temp;
+  float dust;
+  int sv;
+};
+
+#define DHTPIN 10
+#define DHTTYPE DHT11
+
+#define SSID "AIE_509_2.4G"
+#define PASSWORD "addinedu_class1"
+#define HOST_NAME "192.168.0.216"
+#define HOST_PORT (9090)
+
+DHT dht(DHTPIN, DHTTYPE);
 SoftwareSerial mySerial(12, 13); /* RX:13, TX:12 */
 ESP8266 wifi(mySerial);
+Addy_SmartMobility addy = Addy_SmartMobility();
 
 bool tcp_status = false;
-Addy_SmartMobility addy = Addy_SmartMobility();
+
+unsigned long previousMillis = 0;
+const long interval = 300;
+
+int Vo = A2;
+int V_LED = 11;
+float Vo_value = 0;
+float Voltage = 0;
+float dustDensity = 0;
+bool displayHumidityTemp = true;
 
 char data;
 int speed = 0;
@@ -50,52 +71,79 @@ const int avoidanceDistance = 20;
 void setup() {
   Serial.begin(9600);
   connect_wifi();
-
-  pinMode(trigPinFront, OUTPUT);
-  pinMode(echoPinFront, INPUT);
-  pinMode(trigPinBack, OUTPUT);
-  pinMode(echoPinBack, INPUT);
-  pinMode(trigPinLeft, OUTPUT);
-  pinMode(echoPinLeft, INPUT);
-  pinMode(trigPinRight, OUTPUT);
-  pinMode(echoPinRight, INPUT);
+  init_sensors_pinmode();
 
   if (!addy.begin()) {
     Serial.println("모터 쉴드 연결을 다시 확인해주세요.");
     while (1)
       ;
   }
+
   imu_i2c_init();
+  dht.begin();
 
   speed = 125;
   addy.setSpeed(speed);
   addy.moveTo(5);
 }
 
+Sensors sensing(int sv) {
+  Sensors sensors;
+  sensors.temp = dht.readTemperature();
+  sensors.humi = dht.readHumidity();
+
+  digitalWrite(V_LED, LOW);
+  Vo_value = analogRead(Vo);
+  digitalWrite(V_LED, HIGH);
+  Voltage = Vo_value * 5.0 / 1024.0;
+  sensors.dust = (Voltage - 0.1) / 0.005;
+
+  sensors.sv = sv;
+  return sensors;
+}
 
 void loop() {
-
+  unsigned long currentMillis = millis();
   uint8_t buffer[256] = { 0 };
+  int sv = analogRead(A4);
   int z_val = get_Z();
+
+  Sensors sensors;
+  float humi_val, temp_val, dust_val;
+
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    sensors = sensing(sv);
+
+    sensors.humi = humi_val;
+    sensors.temp = temp_val;
+    sensors.sv = sv;
+    sensors.dust = dust_val;
+
+    if (isnan(sensors.humi) || isnan(sensors.temp)) {
+      Serial.println("Failed to read from DHT sensor!!");
+      return;
+    }
+  }
+
   int test = 12345;
-
   char char_z_val[10];
-  char char_test[10];
-
-  sprintf(char_z_val, "%d", z_val);
-  sprintf(char_test, "%d", test);
-
+  char char_humi[10];
+  char char_temp[10];
+  char char_sv[10];
+  char char_dust[10];
   char merge_data[100];
-  sprintf(merge_data, "%s,%s", char_z_val, char_test);
+  sprintf(char_z_val, "%d", z_val);
+  sprintf(char_humi, "%d", sensors.humi);
+  sprintf(char_temp, "%d", sensors.temp);
+  sprintf(char_sv, "%d", sensors.sv);
+  sprintf(char_dust, "%d", sensors.dust);
+
+  sprintf(merge_data, "%s,%s", char_z_val, char_humi, char_temp, char_sv, char_dust);
 
   tcp_on();
   if (tcp_status) {
-    // char *hello = "Hello, this is client!";
-    // wifi.send((const uint8_t *)hello, strlen(hello));
-    // wifi.send((const uint8_t *)&char_z_val, strlen(char_z_val));
-    // wifi.send((const uint8_t *)&char_test, strlen(char_test));
     wifi.send((const uint8_t *)&merge_data, strlen(merge_data));
-
 
     uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
     if (len > 0) {
@@ -120,7 +168,6 @@ void loop() {
   }
 
   addy.moveTo(cmd);
-
 }
 
 void tcp_on() {
@@ -322,68 +369,80 @@ void correction_S(int z_ang) {
   }
 }
 
-
+void init_sensors_pinmode() {
+  pinMode(A4, INPUT);
+  pinMode(V_LED, OUTPUT);
+  pinMode(Vo, INPUT);
+  pinMode(trigPinFront, OUTPUT);
+  pinMode(echoPinFront, INPUT);
+  pinMode(trigPinBack, OUTPUT);
+  pinMode(echoPinBack, INPUT);
+  pinMode(trigPinLeft, OUTPUT);
+  pinMode(echoPinLeft, INPUT);
+  pinMode(trigPinRight, OUTPUT);
+  pinMode(echoPinRight, INPUT);
+}
 
 // float distanceFront = getDistance(trigPinFront, echoPinFront);
-  // float distanceBack = getDistance(trigPinBack, echoPinBack);
-  // float distanceLeft = getDistance(trigPinLeft, echoPinLeft);
-  // float distanceRight = getDistance(trigPinRight, echoPinRight);
+// float distanceBack = getDistance(trigPinBack, echoPinBack);
+// float distanceLeft = getDistance(trigPinLeft, echoPinLeft);
+// float distanceRight = getDistance(trigPinRight, echoPinRight);
 
-  // switch (avoidanceState) {
-  //   case NO_OBSTACLE:
-  //     // 장애물이 있는지 확인
-  //     if (distanceFront <= avoidanceDistance) {
-  //       avoidanceState = AVOIDING_BACK;
-  //     } else if (distanceBack <= avoidanceDistance) {
-  //       avoidanceState = AVOIDING_FRONT;
-  //     } else if (distanceRight <= avoidanceDistance) {
-  //       avoidanceState = AVOIDING_LEFT;
-  //     } else if (distanceLeft <= avoidanceDistance) {
-  //       avoidanceState = AVOIDING_RIGHT;
-  //     } else {
-  //       correction_F();
-  //       addy.moveF(200);
-  //     }
+// switch (avoidanceState) {
+//   case NO_OBSTACLE:
+//     // 장애물이 있는지 확인
+//     if (distanceFront <= avoidanceDistance) {
+//       avoidanceState = AVOIDING_BACK;
+//     } else if (distanceBack <= avoidanceDistance) {
+//       avoidanceState = AVOIDING_FRONT;
+//     } else if (distanceRight <= avoidanceDistance) {
+//       avoidanceState = AVOIDING_LEFT;
+//     } else if (distanceLeft <= avoidanceDistance) {
+//       avoidanceState = AVOIDING_RIGHT;
+//     } else {
+//       correction_F();
+//       addy.moveF(200);
+//     }
 
-  //   case AVOIDING_BACK:
-  //     if (distanceFront < avoidanceDistance) {
-  //       addy.stopAll();
+//   case AVOIDING_BACK:
+//     if (distanceFront < avoidanceDistance) {
+//       addy.stopAll();
 
-  //       if (distanceRight > distanceLeft && distanceRight > avoidanceDistance) {
-  //         addy.rotate(1, 600); // CW
-  //         resetAngle();
-  //         break;
-  //       }
-  //       else if (distanceLeft > distanceRight && distanceLeft > avoidanceDistance){
-  //         addy.rotate(2, 600); // CCW
-  //         resetAngle();
-  //         break;
-  //       }
-  //       else {
-  //         addy.moveB(300);
-  //         break;
-  //       }
-  //       break;
-  //     }
+//       if (distanceRight > distanceLeft && distanceRight > avoidanceDistance) {
+//         addy.rotate(1, 600); // CW
+//         resetAngle();
+//         break;
+//       }
+//       else if (distanceLeft > distanceRight && distanceLeft > avoidanceDistance){
+//         addy.rotate(2, 600); // CCW
+//         resetAngle();
+//         break;
+//       }
+//       else {
+//         addy.moveB(300);
+//         break;
+//       }
+//       break;
+//     }
 
-  //   case AVOIDING_FRONT:
-  //     if (distanceBack < avoidanceDistance) {
-  //       correction_F();
-  //       addy.moveF(300);
-  //       // break;
-  //     }
+//   case AVOIDING_FRONT:
+//     if (distanceBack < avoidanceDistance) {
+//       correction_F();
+//       addy.moveF(300);
+//       // break;
+//     }
 
-  //   case AVOIDING_LEFT:
-  //     if (distanceRight < avoidanceDistance) {
-  //       correction_S();
-  //       addy.moveL(300);
-  //       // break;
-  //     }
+//   case AVOIDING_LEFT:
+//     if (distanceRight < avoidanceDistance) {
+//       correction_S();
+//       addy.moveL(300);
+//       // break;
+//     }
 
-  //   case AVOIDING_RIGHT:
-  //     if (distanceLeft < avoidanceDistance) {
-  //       correction_S();
-  //       addy.moveR(300);
-  //       // break;
-  //     }
-  // }
+//   case AVOIDING_RIGHT:
+//     if (distanceLeft < avoidanceDistance) {
+//       correction_S();
+//       addy.moveR(300);
+//       // break;
+//     }
+// }
