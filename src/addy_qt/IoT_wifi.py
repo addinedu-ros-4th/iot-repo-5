@@ -10,18 +10,54 @@ import serial
 import re
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import socket
 
-from_class = uic.loadUiType("IoT.ui")[0]
+
+from_class = uic.loadUiType("IoT_wifi.ui")[0]
 import pandas as pd
 #import atexit
-class Sensor(QThread):
+
+class CommunicationThread(QThread):
+    received_signal = pyqtSignal(str)  # Signal to emit the received data
+    def run(self):
+        count = 0
+        your_server_port = ""
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind(('your_server_ip', your_server_port))  # Replace with your actual server IP and port
+        server_socket.listen()
+
+        while True:
+            client_socket, client_address = server_socket.accept()
+            print("Connection from ", client_address)
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+
+                decoded = data.decode()
+                print(count, 'received:', decoded)
+                # send_data = "[Hi, I'm TH KIM. I got this Message.] => " + decoded
+                send_data = '5'
+                encoded_send_data = send_data.encode('utf-8')
+                sent = client_socket.send(encoded_send_data)
+
+                if sent == 0:
+                    print("Socket connection broken")
+                print(sent)
+                self.received_signal.emit(decoded)
+
+            print("Disconnected")
+            client_socket.close()
+            count = count + 1
+            
+"""class Sensor(QThread):
     update = pyqtSignal(str)  # Signal to emit the received data
 
     def __init__(self, parent=None):
         super().__init__()
         self.main = parent
         self.running = True
-        self.py_serial = serial.Serial(port='/dev/ttyACM0', baudrate=9600)
+        self.server_address = ('your_wifi_server_ip', your_wifi_server_port)  # Replace with your actual server IP and port
 
     def run(self):
         time.sleep(1)
@@ -41,7 +77,7 @@ class Sensor(QThread):
     def send_serial_data(self, data):
         # Send data to the serial port
         encoded_data = data.encode('utf-8')
-        self.py_serial.write(encoded_data)
+        self.py_serial.write(encoded_data)"""
 
 class ImageLoaderThread(QThread):
     update_signal = pyqtSignal(QPixmap)
@@ -154,8 +190,9 @@ class WindowClass(QMainWindow, from_class):
         self.aqi_labels = ['Good', 'Moderate', 'Unhealthy', 'Very Unhealthy']
         self.data = []
 
-        self.sensor_thread.running = True
-        self.sensor_thread.start()
+        self.comm_thread = CommunicationThread()
+        self.comm_thread.received_signal.connect(lambda data: print(f"Signal received: {data}"))
+        self.comm_thread.start()
         
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
@@ -221,6 +258,7 @@ class WindowClass(QMainWindow, from_class):
         print('hi')
         data_to_send = "9"
         self.sensor_thread.send_serial_data(data_to_send)
+
 
 
     def update_data(self, frame):
@@ -521,7 +559,6 @@ if __name__ == "__main__":
     myWindows = WindowClass()
     
     myWindows.show()
-    
     
     sys.exit(app.exec_())
     
