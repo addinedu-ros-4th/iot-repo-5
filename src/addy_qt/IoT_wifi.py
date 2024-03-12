@@ -232,24 +232,23 @@ class WindowClass(QMainWindow, from_class):
     def parsing_data(self, decoded):
         temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
         split_data = decoded.split(',')
-
+        print(split_data)
         try:
-            temp = float(split_data[0].strip()) # temp
-            humidity = float(split_data[1].strip()) # humi
-            co2 = int(split_data[2].strip()) # sv
-            pm10 = float(split_data[3].strip()) # dust
-            z_ang = int(split_data[4].strip()) # imu
+            temp = 0.0
+            humidity = 0.0
+            co2 = int(split_data[0].strip()) # sv
+            pm10 = float(split_data[1].strip()) # dust
+            z_ang = int(split_data[2].strip()) # imu
         except :
-            print("Sensor Error")
+            print("parsing_data : Sensor Error")
             
         self.data = [temp, humidity, co2, pm10, z_ang]
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        if len(self.data) < 5:
-            pass
-        else:
-            temp, humidity, co2, pm10,  z_ang= 0.0, 0.0, 0, 0.0, 0
-
+        # if len(self.data) < 5:
+        #     pass
+        # else:
+        #     temp, humidity, co2, pm10,  z_ang= 0.0, 0.0, 0, 0.0, 0
 
         self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
         self.LiveStatus.setItem(0, 1, QTableWidgetItem(str(temp)))
@@ -261,9 +260,7 @@ class WindowClass(QMainWindow, from_class):
 
         aqi = self.calculate_aqi(pm10)
         status = self.get_aqi_status(aqi)
-        
         self.feedback.setText(status)
-
 
     def signal_handler(self, sig, frame):
         self.comm_thread.close_socket()
