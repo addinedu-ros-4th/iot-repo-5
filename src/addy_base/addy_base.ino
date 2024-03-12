@@ -1,8 +1,6 @@
-#include "ESP8266.h"
 #include <SoftwareSerial.h>
+#include "ESP8266.h"
 #include <Wire.h>
-#include <DHT.h>
-#include <DHT_U.h>
 #include "./Addy_SmartMobility.h"
 
 enum AvoidanceState {
@@ -15,27 +13,13 @@ enum AvoidanceState {
 };
 AvoidanceState avoidanceState = NO_OBSTACLE;
 
-struct Sensors {
-  float humi;
-  float temp;
-  float dust;
-  int sv;
-};
-
-float humi_val = 0.0;
-float temp_val = 0.0;
-float dust_val = 0.0;
-int sv_val = 0;
-
-#define DHTPIN 10
-#define DHTTYPE DHT11
-
-#define SSID "AIE_509_2.4G"
-#define PASSWORD "addinedu_class1"
-#define HOST_NAME "192.168.0.216"
+// #define SSID "AIE_509_2.4G"
+// #define PASSWORD "addinedu_class1"
+#define SSID "iptime_addy"
+#define PASSWORD "12345678"
+#define HOST_NAME "192.168.0.23"
 #define HOST_PORT (9090)
 
-DHT dht(DHTPIN, DHTTYPE);
 SoftwareSerial mySerial(12, 13); /* RX:13, TX:12 */
 ESP8266 wifi(mySerial);
 Addy_SmartMobility addy = Addy_SmartMobility();
@@ -47,6 +31,7 @@ const long interval = 300;
 
 int Vo = A2;
 int V_LED = 11;
+int sv = 0;
 float Vo_value = 0;
 float Voltage = 0;
 float dustDensity = 0;
@@ -85,7 +70,6 @@ void setup() {
   }
 
   imu_i2c_init();
-  dht.begin();
 
   speed = 125;
   addy.setSpeed(speed);
@@ -96,37 +80,33 @@ void loop() {
   unsigned long currentMillis = millis();
   uint8_t buffer[256] = { 0 };
   int z_val = get_Z();
-
-  Sensors sensors;
+  sv = analogRead(A4);
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    sensors = sensing();
+    digitalWrite(V_LED, LOW);
+    Vo_value = analogRead(Vo);
+    digitalWrite(V_LED, HIGH);
 
-    humi_val = sensors.humi;
-    temp_val = sensors.temp;
-    sv_val = sensors.sv;
-    dust_val = sensors.dust;
-
-    if (isnan(humi_val) || isnan(temp_val)) {
-      // Serial.println("Failed to read from DHT sensor!!");
-      return;
-    }
+    Voltage = Vo_value * 5.0 / 1024.0;
+    dustDensity = (Voltage - 0.1) / 0.005;
   }
 
   char char_z_val[10];
-  char char_humi[10];
-  char char_temp[10];
+  char char_humi[20];
+  char char_temp[20];
   char char_sv[10];
-  char char_dust[10];
+  char char_dust[20];
   char merge_data[100];
-  sprintf(char_humi, "%f", humi_val);
-  sprintf(char_temp, "%f", temp_val);
-  sprintf(char_sv, "%d", sv_val);
-  sprintf(char_dust, "%f", dust_val);
+
+  // dtostrf(humi, 6, 2, char_humi);
+  // dtostrf(temp, 6, 2, char_temp);
+  sprintf(char_sv, "%d", sv);
+  dtostrf(dustDensity, 6, 2, char_dust);
   sprintf(char_z_val, "%d", z_val);
 
-  sprintf(merge_data, "%s,%s,%s,%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
+  // sprintf(merge_data, "%s,%s,%s,%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
+  sprintf(merge_data, "%s,%s,%s", char_sv, char_dust, char_z_val);
 
   tcp_on();
   if (tcp_status) {
@@ -324,7 +304,7 @@ int get_Z() {
 }
 
 void resetAngle() {
-  Serial.println("Resetting Angle!");
+  // Serial.println("Resetting Angle!");
   for (int i = 0; i < 3; i++) {
     angle[i] = 0;
   }
@@ -405,22 +385,6 @@ void init_sensors_pinmode() {
   pinMode(echoPinLeft, INPUT);
   pinMode(trigPinRight, OUTPUT);
   pinMode(echoPinRight, INPUT);
-}
-
-Sensors sensing() {
-  Sensors sensors;
-  sensors.temp = dht.readTemperature();
-  sensors.humi = dht.readHumidity();
-
-  digitalWrite(V_LED, LOW);
-  Vo_value = analogRead(Vo);
-  digitalWrite(V_LED, HIGH);
-  Voltage = Vo_value * 5.0 / 1024.0;
-  sensors.dust = (Voltage - 0.1) / 0.005;
-
-  int sv = analogRead(A4);
-  sensors.sv = sv;
-  return sensors;
 }
 
 // float distanceFront = getDistance(trigPinFront, echoPinFront);
