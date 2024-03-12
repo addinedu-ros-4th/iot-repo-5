@@ -50,10 +50,6 @@ class CommunicationThread(QThread):
                         break
                     
                     decoded_data = data.decode()
-
-
-                    # send_data = "[Hi, I'm TH KIM. I got this Message.] => " + decoded
-                    
                     send_data = self.cmd
                     encoded_send_data = send_data.encode('utf-8')
                     sent = client_socket.send(encoded_send_data)
@@ -62,7 +58,6 @@ class CommunicationThread(QThread):
                         print("Socket connection broken")
                     # print(sent)
                     self.received_signal.emit(decoded_data)
-
                 # print("Disconnected")
                 client_socket.close()
                 count = count + 1
@@ -183,15 +178,15 @@ class WindowClass(QMainWindow, from_class):
         self.btnExport.clicked.connect(self.exportTable)
         self.btnReset.clicked.connect(self.reset)
         
-        self.btncmd_1.clicked.connect(self.cmd_1)
-        self.btncmd_2.clicked.connect(self.cmd_2)
-        self.btncmd_3.clicked.connect(self.cmd_3)
+        self.btncmd_1.clicked.connect(self.cmd_7)
+        self.btncmd_2.clicked.connect(self.cmd_8)
+        self.btncmd_3.clicked.connect(self.cmd_9)
         self.btncmd_4.clicked.connect(self.cmd_4)
         self.btncmd_5.clicked.connect(self.cmd_5)
         self.btncmd_6.clicked.connect(self.cmd_6)
-        self.btncmd_7.clicked.connect(self.cmd_7)
-        self.btncmd_8.clicked.connect(self.cmd_8)
-        self.btncmd_9.clicked.connect(self.cmd_9)
+        self.btncmd_7.clicked.connect(self.cmd_1)
+        self.btncmd_8.clicked.connect(self.cmd_2)
+        self.btncmd_9.clicked.connect(self.cmd_3)
         self.btncmd_emer.clicked.connect(self.cmd_emer)
         
                 
@@ -235,19 +230,40 @@ class WindowClass(QMainWindow, from_class):
         signal.signal(signal.SIGINT, self.signal_handler)
 
     def parsing_data(self, decoded):
-        # decoded = data.decode()
-        # print(data, type(data))
-        # print(decoded, type(decoded))
-
+        temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
         split_data = decoded.split(',')
-        self.z_val = int(split_data[0].strip())
-        test = int(split_data[1].strip())
 
-        # self.handle_sensor_data()
+        try:
+            temp = float(split_data[0].strip()) # temp
+            humidity = float(split_data[1].strip()) # humi
+            co2 = int(split_data[2].strip()) # sv
+            pm10 = float(split_data[3].strip()) # dust
+            z_ang = int(split_data[4].strip()) # imu
+        except :
+            print("Sensor Error")
+            
+        self.data = [temp, humidity, co2, pm10, z_ang]
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        print(self.z_val, test)
-        z_ang = self.z_val
+        if len(self.data) < 5:
+            pass
+        else:
+            temp, humidity, co2, pm10,  z_ang= 0.0, 0.0, 0, 0.0, 0
+
+
+        self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
+        self.LiveStatus.setItem(0, 1, QTableWidgetItem(str(temp)))
+        self.LiveStatus.setItem(0, 2, QTableWidgetItem(str(humidity)))
+        self.LiveStatus.setItem(0, 3, QTableWidgetItem(str(co2)))
+        self.LiveStatus.setItem(0, 4, QTableWidgetItem(str(pm10)))
+        self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
         self.label_z.setText("Z : {}".format(z_ang))
+
+        aqi = self.calculate_aqi(pm10)
+        status = self.get_aqi_status(aqi)
+        
+        self.feedback.setText(status)
+
 
     def signal_handler(self, sig, frame):
         self.comm_thread.close_socket()
@@ -325,17 +341,14 @@ class WindowClass(QMainWindow, from_class):
     def update_data(self, frame):
         # 데이터를 파싱하여 각 변수에 저장
         if len(self.data) >= 4:
-            # Temperature
-            temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
-            
-            # Humidity
-            humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
-            
-            # CO2
-            co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
-            
-            # PM10
-            pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
+            temp = self.data[0]
+            humidity = self.data[1]
+            co2 = self.data[2]
+            pm10 = self.data[3]
+            # temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
+            # humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
+            # co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
+            # pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
         else:
         # 기본값 할당
             temp, humidity, co2, pm10 = 0.0, 0.0, 0, 0.0
