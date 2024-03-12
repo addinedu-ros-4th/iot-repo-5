@@ -87,20 +87,7 @@ void setup() {
   addy.moveTo(5);
 }
 
-Sensors sensing(int sv) {
-  Sensors sensors;
-  sensors.temp = dht.readTemperature();
-  sensors.humi = dht.readHumidity();
 
-  digitalWrite(V_LED, LOW);
-  Vo_value = analogRead(Vo);
-  digitalWrite(V_LED, HIGH);
-  Voltage = Vo_value * 5.0 / 1024.0;
-  sensors.dust = (Voltage - 0.1) / 0.005;
-
-  sensors.sv = sv;
-  return sensors;
-}
 
 void loop() {
   unsigned long currentMillis = millis();
@@ -121,12 +108,11 @@ void loop() {
     sensors.dust = dust_val;
 
     if (isnan(sensors.humi) || isnan(sensors.temp)) {
-      Serial.println("Failed to read from DHT sensor!!");
+      // Serial.println("Failed to read from DHT sensor!!");
       return;
     }
   }
 
-  int test = 12345;
   char char_z_val[10];
   char char_humi[10];
   char char_temp[10];
@@ -139,7 +125,7 @@ void loop() {
   sprintf(char_sv, "%d", sensors.sv);
   sprintf(char_dust, "%d", sensors.dust);
 
-  sprintf(merge_data, "%s,%s", char_z_val, char_humi, char_temp, char_sv, char_dust);
+  sprintf(merge_data, "%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
 
   tcp_on();
   if (tcp_status) {
@@ -147,19 +133,19 @@ void loop() {
 
     uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
     if (len > 0) {
-      Serial.print("Received:[");
+      // Serial.print("Received:[");
       for (uint32_t i = 0; i < len; i++) {
         Serial.print((char)buffer[i]);
       }
-      Serial.print("]\r\n");
+      // Serial.print("]\r\n");
       cmd = (int)buffer[0] - 48;
-      Serial.println(cmd);
+      // Serial.println(cmd);
     }
   }
   tcp_off();
 
-  Serial.print("IMU : ");
-  Serial.println(z_val);
+  // Serial.print("IMU : ");
+  // Serial.println(z_val);
 
   if (cmd == 2 || cmd == 8) {
     correction_F(z_val);
@@ -381,6 +367,21 @@ void init_sensors_pinmode() {
   pinMode(echoPinLeft, INPUT);
   pinMode(trigPinRight, OUTPUT);
   pinMode(echoPinRight, INPUT);
+}
+
+Sensors sensing(int sv) {
+  Sensors sensors;
+  sensors.temp = dht.readTemperature();
+  sensors.humi = dht.readHumidity();
+
+  digitalWrite(V_LED, LOW);
+  Vo_value = analogRead(Vo);
+  digitalWrite(V_LED, HIGH);
+  Voltage = Vo_value * 5.0 / 1024.0;
+  sensors.dust = (Voltage - 0.1) / 0.005;
+
+  sensors.sv = sv;
+  return sensors;
 }
 
 // float distanceFront = getDistance(trigPinFront, echoPinFront);
