@@ -107,30 +107,30 @@ void loop() {
     temp_val = sensors.temp;
     sv_val = sensors.sv;
     dust_val = sensors.dust;
-
-    if (isnan(humi_val) || isnan(temp_val)) {
-      // Serial.println("Failed to read from DHT sensor!!");
-      return;
-    }
   }
 
+  float test = dht.readTemperature();
   char char_z_val[10];
-  char char_humi[10];
-  char char_temp[10];
+  char char_humi[20];
+  char char_temp[20];
   char char_sv[10];
-  char char_dust[10];
-  char merge_data[100];
-  sprintf(char_humi, "%f", humi_val);
-  sprintf(char_temp, "%f", temp_val);
+  char char_dust[20];
+  char merge_data[80];
+
+  dtostrf(temp_val, 6, 2, char_temp);
+  dtostrf(humi_val, 6, 2, char_humi);
   sprintf(char_sv, "%d", sv_val);
-  sprintf(char_dust, "%f", dust_val);
+  dtostrf(dust_val, 6, 2, char_dust);
   sprintf(char_z_val, "%d", z_val);
 
   sprintf(merge_data, "%s,%s,%s,%s,%s", char_temp, char_humi, char_sv, char_dust, char_z_val);
-
+  Serial.println(merge_data);
+#if 1
   tcp_on();
   if (tcp_status) {
-    wifi.send((const uint8_t *)&merge_data, strlen(merge_data));
+
+    wifi.send((const uint8_t *)&char_z_val, strlen(char_z_val));
+    // wifi.send((const uint8_t *)&merge_data, strlen(merge_data));
 
     uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
     if (len > 0) {
@@ -144,7 +144,7 @@ void loop() {
     }
   }
   tcp_off();
-
+#endif
   // Serial.print("IMU : ");
   // Serial.println(z_val);
 
@@ -152,8 +152,10 @@ void loop() {
     correction_F(z_val);
   } else if (cmd == 8) {
     correction_B(z_val);
-  } else if (cmd == 4 || cmd == 6) {
-    correction_S(z_val);
+  } else if (cmd == 4) {
+    correction_L(z_val);
+  } else if (cmd == 6) {
+    correction_R(z_val);
   }
   if (cmd == 5) {
     resetAngle();
@@ -372,18 +374,39 @@ void correction_B(int z_ang) {
   }
 }
 
-void correction_S(int z_ang) {
+void correction_L(int z_ang) {
   int delta = 10;
 
   if (z_ang > 0) {
     addy.setSpeed(1, speed + delta);
-    addy.setSpeed(2, speed + delta);
+    addy.setSpeed(2, speed - delta);
     addy.setSpeed(3, speed - delta);
-    addy.setSpeed(4, speed - delta);
+    addy.setSpeed(4, speed + delta);
   } else if (z_ang < 0) {
     addy.setSpeed(1, speed - delta);
-    addy.setSpeed(2, speed - delta);
+    addy.setSpeed(2, speed + delta);
     addy.setSpeed(3, speed + delta);
+    addy.setSpeed(4, speed - delta);
+  } else {
+    addy.setSpeed(1, speed);
+    addy.setSpeed(2, speed);
+    addy.setSpeed(3, speed);
+    addy.setSpeed(4, speed);
+  }
+}
+
+void correction_R(int z_ang) {
+  int delta = 10;
+
+  if (z_ang > 0) {
+    addy.setSpeed(1, speed - delta);
+    addy.setSpeed(2, speed + delta);
+    addy.setSpeed(3, speed + delta);
+    addy.setSpeed(4, speed - delta);
+  } else if (z_ang < 0) {
+    addy.setSpeed(1, speed + delta);
+    addy.setSpeed(2, speed - delta);
+    addy.setSpeed(3, speed - delta);
     addy.setSpeed(4, speed + delta);
   } else {
     addy.setSpeed(1, speed);
@@ -408,19 +431,25 @@ void init_sensors_pinmode() {
 }
 
 Sensors sensing() {
-  Sensors sensors;
-  sensors.temp = dht.readTemperature();
-  sensors.humi = dht.readHumidity();
+  Sensors temp_sensors;
+  temp_sensors.temp = dht.readTemperature();
+  temp_sensors.humi = dht.readHumidity();
 
   digitalWrite(V_LED, LOW);
   Vo_value = analogRead(Vo);
   digitalWrite(V_LED, HIGH);
   Voltage = Vo_value * 5.0 / 1024.0;
-  sensors.dust = (Voltage - 0.1) / 0.005;
+  temp_sensors.dust = (Voltage - 0.1) / 0.005;
 
-  int sv = analogRead(A4);
-  sensors.sv = sv;
-  return sensors;
+  int sv = analogRead(A3);
+  temp_sensors.sv = sv;
+  if (isnan(temp_sensors.humi) || isnan(temp_sensors.temp)) {
+    Serial.println("Failed to read from DHT sensor!!");
+    temp_sensors.humi = 0.0;
+    temp_sensors.temp = 0.0;
+    // return;
+  }
+  return temp_sensors;
 }
 
 // float distanceFront = getDistance(trigPinFront, echoPinFront);
