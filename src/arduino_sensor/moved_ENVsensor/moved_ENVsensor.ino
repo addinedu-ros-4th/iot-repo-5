@@ -1,16 +1,16 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define DHTPIN 8
+#define DHTPIN 10
 #define DHTTYPE DHT11
 
 DHT dht(DHTPIN, DHTTYPE);
 
 unsigned long previousMillis = 0;
-const long interval = 500; // 5 seconds
+const long interval = 300; 
 
-int Vo = A1;
-int V_LED = 2;  
+int Vo = A2;  
+int V_LED = 11; 
 
 float Vo_value = 0;
 float Voltage = 0;
@@ -21,7 +21,7 @@ bool displayHumidityTemp = true;
 void setup() {
   Serial.begin(9600);
   
-  pinMode(A0, INPUT);
+  pinMode(A4, INPUT);
   pinMode(V_LED, OUTPUT);
   pinMode(Vo, INPUT);
   
@@ -30,7 +30,7 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
-  int sv = analogRead(A0);
+  int sv = analogRead(A4);
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
@@ -40,14 +40,11 @@ void loop() {
     humi = dht.readHumidity();
 
     digitalWrite(V_LED, LOW);
-    delayMicroseconds(280);
     Vo_value = analogRead(Vo);
-    delayMicroseconds(40);
     digitalWrite(V_LED, HIGH);
-    delayMicroseconds(9680);
 
-    Voltage = Vo_value * 5.0 / 1023.0;
-    dustDensity = (Voltage - 0.3) / 0.005;
+    Voltage = Vo_value * 5.0 / 1024.0;
+    dustDensity = (Voltage - 0.1) / 0.005;
 
     if (isnan(humi) || isnan(temp)) {
       Serial.println("Failed to read from DHT Sensor!!");
