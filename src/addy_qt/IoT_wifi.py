@@ -32,35 +32,44 @@ class CommunicationThread(QThread):
 
     def connect(self):
         try:
+            print("connect")
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.bind(("192.168.0.23", self.server_port))
+            self.server_socket.bind(("0.0.0.0", self.server_port))
             self.server_socket.listen(self.max_users)
         except Exception as e:
             print("ERRRORRRR::: ",e)
 
     def run(self):
         count = 0
+        print("thread head")
         try:
+            print("thread try")
+            
             while self.running:
-                client_socket, client_address = self.server_socket.accept()
-                # print("Connection from ", client_address)
                 while True:
-                    data = client_socket.recv(1024)
-                    if not data:
-                        break
+                    print("thread running")
+                    client_socket, client_address = self.server_socket.accept()
+                    print("thread running2")
                     
-                    decoded_data = data.decode()
-                    send_data = self.cmd
-                    encoded_send_data = send_data.encode('utf-8')
-                    sent = client_socket.send(encoded_send_data)
+                    print("Connection from ", client_address)
+                    while True:
+                        data = client_socket.recv(1024)
+                        if not data:
+                            break
+                        
+                        decoded_data = data.decode()
+                        print(decoded_data)
+                        send_data = self.cmd
+                        encoded_send_data = send_data.encode('utf-8')
+                        sent = client_socket.send(encoded_send_data)
 
-                    if sent == 0:
-                        print("Socket connection broken")
-                    # print(sent)
-                    self.received_signal.emit(decoded_data)
-                # print("Disconnected")
-                client_socket.close()
-                count = count + 1
+                        if sent == 0:
+                            print("Socket connection broken")
+                        # print(sent)
+                        self.received_signal.emit(decoded_data)
+                    # print("Disconnected")
+                    client_socket.close()
+                    count = count + 1
 
         except Exception as e:
             print("ERROR: ",e)
@@ -189,7 +198,13 @@ class WindowClass(QMainWindow, from_class):
         self.btncmd_9.clicked.connect(self.cmd_3)
         self.btncmd_emer.clicked.connect(self.cmd_emer)
         
-                
+        background_image_path = "/home/hj/Pictures/Screenshots/background.png"
+        
+        # QPixmap을 사용하여 이미지를 로드하고 QLabel에 설정
+        pixmap = QPixmap(background_image_path)
+        self.label_background.setPixmap(pixmap)
+        self.label_background.setScaledContents(True)
+               
         self.row_count_1 = self.status_1.rowCount()
         self.row_count_2 = self.status_2.rowCount()
         self.row_count_3 = self.status_3.rowCount()
@@ -221,7 +236,6 @@ class WindowClass(QMainWindow, from_class):
         self.comm_thread.start()
         self.comm_thread.running = True
         # self.comm_thread.update.connect(self.handle_sensor_data)
-        self.z_val = 0
         
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
@@ -232,6 +246,7 @@ class WindowClass(QMainWindow, from_class):
     def parsing_data(self, decoded):
         temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
         split_data = decoded.split(',')
+        print(decoded,split_data)
 
         try:
             temp = float(split_data[0].strip()) # temp
@@ -480,8 +495,8 @@ class WindowClass(QMainWindow, from_class):
                 # PM10
                 pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
                 
-                # z_ang = float(self.data[4])
-                z_ang = self.z_val
+                z_ang = float(self.data[4])
+                # z_ang = self.z_val
             except :
                 print("Sensor Error")
         else:
@@ -503,14 +518,15 @@ class WindowClass(QMainWindow, from_class):
         
         
     def Add_1(self):
+        print("1")
         self.status_1.insertRow(self.row_count_1)
+        
         self.status_1.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
         self.status_1.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
         self.status_1.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text())) 
         self.status_1.setItem(self.row_count_1, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
         self.status_1.setItem(self.row_count_1, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
         self.place = "1"
-
         self.changeQR1Color()
         self.load_marker_image(0) 
 
