@@ -99,7 +99,7 @@ void setup() {
     s->set_framesize(s, FRAMESIZE_QVGA);
   }
 
-  s->set_quality(s, 60);
+  s->set_quality(s, 10);
   s->set_hmirror(s, 1);
   s->set_vflip(s, 1);
 

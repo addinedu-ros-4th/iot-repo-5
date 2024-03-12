@@ -61,7 +61,7 @@ def use_usb_cam():
     return cap
 
 def use_esp_cam():
-    SERVER_IP = '192.168.0.27'
+    SERVER_IP = '192.168.0.37'
     PORT = 81
     esp_url = f"http://{SERVER_IP}:{PORT}/stream"
     cap = cv2.VideoCapture(esp_url)

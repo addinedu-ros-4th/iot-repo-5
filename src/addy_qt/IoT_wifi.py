@@ -10,18 +10,80 @@ import serial
 import re
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import socket
+import signal
+import json
 
-from_class = uic.loadUiType("IoT.ui")[0]
+from_class = uic.loadUiType("IoT_wifi.ui")[0]
 import pandas as pd
 #import atexit
-class Sensor(QThread):
+
+class CommunicationThread(QThread):
+    received_signal = pyqtSignal(str)  # Signal to emit the received data
+    def __init__(self, parent=None):
+        super().__init__()
+        self.main = parent
+        self.running = True
+        self.server_port = 9090
+        self.max_users = 5 #maximum number of queued connections
+        self.cmd = "5"
+
+        self.connect()
+
+    def connect(self):
+        try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.bind(("192.168.0.23", self.server_port))
+            self.server_socket.listen(self.max_users)
+        except Exception as e:
+            print("ERRRORRRR::: ",e)
+
+    def run(self):
+        count = 0
+        try:
+            while self.running:
+                client_socket, client_address = self.server_socket.accept()
+                # print("Connection from ", client_address)
+                while True:
+                    data = client_socket.recv(1024)
+                    if not data:
+                        break
+                    
+                    decoded_data = data.decode()
+                    send_data = self.cmd
+                    encoded_send_data = send_data.encode('utf-8')
+                    sent = client_socket.send(encoded_send_data)
+
+                    if sent == 0:
+                        print("Socket connection broken")
+                    # print(sent)
+                    self.received_signal.emit(decoded_data)
+                # print("Disconnected")
+                client_socket.close()
+                count = count + 1
+
+        except Exception as e:
+            print("ERROR: ",e)
+            self.server_socket.close()
+            time.sleep(1)
+            self.connect()
+
+    def close_socket(self):
+        if hasattr(self, 'server_socket'):
+            self.server_socket.close()
+
+    def stop(self):
+        self.running = False
+        self.server_socket.close()
+    
+"""class Sensor(QThread):
     update = pyqtSignal(str)  # Signal to emit the received data
 
     def __init__(self, parent=None):
         super().__init__()
         self.main = parent
         self.running = True
-        self.py_serial = serial.Serial(port='/dev/ttyACM0', baudrate=9600)
+        self.server_address = ('your_wifi_server_ip', your_wifi_server_port)  # Replace with your actual server IP and port
 
     def run(self):
         time.sleep(1)
@@ -41,7 +103,7 @@ class Sensor(QThread):
     def send_serial_data(self, data):
         # Send data to the serial port
         encoded_data = data.encode('utf-8')
-        self.py_serial.write(encoded_data)
+        self.py_serial.write(encoded_data)"""
 
 class ImageLoaderThread(QThread):
     update_signal = pyqtSignal(QPixmap)
@@ -116,15 +178,15 @@ class WindowClass(QMainWindow, from_class):
         self.btnExport.clicked.connect(self.exportTable)
         self.btnReset.clicked.connect(self.reset)
         
-        self.btncmd_1.clicked.connect(self.cmd_1)
-        self.btncmd_2.clicked.connect(self.cmd_2)
-        self.btncmd_3.clicked.connect(self.cmd_3)
+        self.btncmd_1.clicked.connect(self.cmd_7)
+        self.btncmd_2.clicked.connect(self.cmd_8)
+        self.btncmd_3.clicked.connect(self.cmd_9)
         self.btncmd_4.clicked.connect(self.cmd_4)
         self.btncmd_5.clicked.connect(self.cmd_5)
         self.btncmd_6.clicked.connect(self.cmd_6)
-        self.btncmd_7.clicked.connect(self.cmd_7)
-        self.btncmd_8.clicked.connect(self.cmd_8)
-        self.btncmd_9.clicked.connect(self.cmd_9)
+        self.btncmd_7.clicked.connect(self.cmd_1)
+        self.btncmd_8.clicked.connect(self.cmd_2)
+        self.btncmd_9.clicked.connect(self.cmd_3)
         self.btncmd_emer.clicked.connect(self.cmd_emer)
         
                 
@@ -135,8 +197,8 @@ class WindowClass(QMainWindow, from_class):
         self.row_count_5 = self.status_5.rowCount()
         self.LiveStatus.insertRow(0)
 
-        self.sensor_thread = Sensor(self)
-        self.sensor_thread.update.connect(self.handle_sensor_data)
+        # self.sensor_thread = Sensor(self)
+        # self.sensor_thread.update.connect(self.handle_sensor_data)
 
         self.cols = ['Date', 'Temperature (°C)', 'Humidity (%)', 'Co2 (ppm)', 'PM-10 (μg/m3)', 'Place']
        
@@ -154,16 +216,61 @@ class WindowClass(QMainWindow, from_class):
         self.aqi_labels = ['Good', 'Moderate', 'Unhealthy', 'Very Unhealthy']
         self.data = []
 
-        self.sensor_thread.running = True
-        self.sensor_thread.start()
+        self.comm_thread = CommunicationThread()
+        self.comm_thread.received_signal.connect(self.parsing_data)
+        self.comm_thread.start()
+        self.comm_thread.running = True
+        # self.comm_thread.update.connect(self.handle_sensor_data)
+        self.z_val = 0
         
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
         self.image_loader_thread.start()
 
+        signal.signal(signal.SIGINT, self.signal_handler)
+
+    def parsing_data(self, decoded):
+        temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
+        split_data = decoded.split(',')
+
+        try:
+            temp = float(split_data[0].strip()) # temp
+            humidity = float(split_data[1].strip()) # humi
+            co2 = int(split_data[2].strip()) # sv
+            pm10 = float(split_data[3].strip()) # dust
+            z_ang = int(split_data[4].strip()) # imu
+        except :
+            print("Sensor Error")
+            
+        self.data = [temp, humidity, co2, pm10, z_ang]
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if len(self.data) < 5:
+            pass
+        else:
+            temp, humidity, co2, pm10,  z_ang= 0.0, 0.0, 0, 0.0, 0
+
+
+        self.LiveStatus.setItem(0, 0, QTableWidgetItem(current_time))
+        self.LiveStatus.setItem(0, 1, QTableWidgetItem(str(temp)))
+        self.LiveStatus.setItem(0, 2, QTableWidgetItem(str(humidity)))
+        self.LiveStatus.setItem(0, 3, QTableWidgetItem(str(co2)))
+        self.LiveStatus.setItem(0, 4, QTableWidgetItem(str(pm10)))
+        self.LiveStatus.setItem(0, 5, QTableWidgetItem(self.place))
+        self.label_z.setText("Z : {}".format(z_ang))
+
+        aqi = self.calculate_aqi(pm10)
+        status = self.get_aqi_status(aqi)
+        
+        self.feedback.setText(status)
+
+
+    def signal_handler(self, sig, frame):
+        self.comm_thread.close_socket()
+
     def cmd_emer(self) :
-        self.sensor_thread.running = False
-        self.sensor_thread.stop()
+        # self.sensor_thread.running = False
+        # self.sensor_thread.stop()
         print("hi")
 
     def load_marker_image(self, marker_index):
@@ -180,65 +287,68 @@ class WindowClass(QMainWindow, from_class):
     def cmd_1(self):
         print('hi')
         data_to_send = "1"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "1"
         
     def cmd_2(self):
         print('hi')
         data_to_send = "2"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "2"
 
     def cmd_3(self):
         print('hi')
         data_to_send = "3"
-        self.sensor_thread.send_serial_data(data_to_send)
-        
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "3"
+
     def cmd_4(self):
         print('hi')
         data_to_send = "4"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "4"
 
     def cmd_5(self):
         print('hi')
         data_to_send = "5"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "5"
         
     def cmd_6(self):
         print('hi')
         data_to_send = "6"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "6"
 
     def cmd_7(self):
         print('hi')
         data_to_send = "7"
-        self.sensor_thread.send_serial_data(data_to_send)
-        
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "7"
+
     def cmd_8(self):
         print('hi')
         data_to_send = "8"
-        self.sensor_thread.send_serial_data(data_to_send)
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "8"
 
     def cmd_9(self):
         print('hi')
         data_to_send = "9"
-        self.sensor_thread.send_serial_data(data_to_send)
-
+        # self.sensor_thread.send_serial_data(data_to_send)
+        self.comm_thread.cmd = "9"
 
     def update_data(self, frame):
-
-
         # 데이터를 파싱하여 각 변수에 저장
         if len(self.data) >= 4:
-            # Temperature
-            temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
-            
-            # Humidity
-            humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
-            
-            # CO2
-            co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
-            
-            # PM10
-            pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
+            temp = self.data[0]
+            humidity = self.data[1]
+            co2 = self.data[2]
+            pm10 = self.data[3]
+            # temp = float(self.data[0].split(":")[1].strip().replace("°C", ""))
+            # humidity = float(self.data[1].split(":")[1].strip().replace("%", ""))
+            # co2 = int(self.data[2].split(":")[1].strip().replace("ppm", ""))
+            # pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
         else:
         # 기본값 할당
             temp, humidity, co2, pm10 = 0.0, 0.0, 0, 0.0
@@ -370,7 +480,8 @@ class WindowClass(QMainWindow, from_class):
                 # PM10
                 pm10 = float(self.data[3].split(":")[1].strip().replace("ug/m3", ""))
                 
-                z_ang = float(self.data[4])
+                # z_ang = float(self.data[4])
+                z_ang = self.z_val
             except :
                 print("Sensor Error")
         else:
@@ -521,7 +632,6 @@ if __name__ == "__main__":
     myWindows = WindowClass()
     
     myWindows.show()
-    
     
     sys.exit(app.exec_())
     

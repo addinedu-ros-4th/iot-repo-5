@@ -8,9 +8,12 @@
 #define DHTTYPE DHT11
 
 DHT dht(DHTPIN, DHTTYPE);
+float humi, temp;
 
 unsigned long previousMillis = 0;
 const long interval = 500; // 5 seconds
+
+float angle[3]={0,}, vec;
 
 int Vo = A1;
 int V_LED = 2;  
@@ -75,12 +78,17 @@ void setup() {
   Wire.endTransmission();
 }
 
-int16_t offset[3] = {-22, 15, -20};
+int16_t offset[3] = {32, 15, -15};
 
 int get_Z() {
   uint8_t i;
-  static int16_t gyro_raw[3]={0,};
-
+  static int16_t acc_raw[3]={0,}, gyro_raw[3]={0,};
+  // Get Accel
+  Wire.beginTransmission(0x68);
+  Wire.write(59);
+  Wire.endTransmission();
+  Wire.requestFrom(0x68, 6);
+  for(i = 0; i < 3; i++) acc_raw[i] = (Wire.read() << 8) | Wire.read();
   // Get Gyro
   Wire.beginTransmission(0x68);
   Wire.write(67);
@@ -97,16 +105,21 @@ int get_Z() {
   float gyro_rate[3];
   for(i = 0; i < 3; i++) gyro_rate[i] = gyro_raw[i] / 16.4 * dt;
   // Calculate
-  static float angle[3]={0,}, vec;
-
+  vec = sqrt(pow(acc_raw[0], 2) + pow(acc_raw[2], 2));
+  angle[0] = (angle[0] + gyro_rate[0]) * 0.98
+    + atan2(acc_raw[1], vec) * RAD_TO_DEG * 0.02;
+  vec = sqrt(pow(acc_raw[1], 2) + pow(acc_raw[2], 2));
+  angle[1] = (angle[1] - gyro_rate[1]) * 0.98
+    + atan2(acc_raw[0], vec) * RAD_TO_DEG * 0.02;
   // Serial print
   angle[2] += gyro_rate[2];
-  char ang_z[10];
+  char str[50], a1[10], a2[10], a3[10];
+  dtostrf(angle[0], 4, 3, a1);
+  dtostrf(angle[1], 4, 3, a2);
+  dtostrf(angle[2], 4, 3, a3);
 
-  dtostrf(angle[2], 4, 3, ang_z);
-  
+  return atoi(a3);
 
-  return atoi(ang_z);
 }
 
 void correction(int cmd) {
@@ -159,15 +172,29 @@ void correction(int cmd) {
     sm.setSpeed(speed);
   }*/
 }
+void resetAngle() {
+  Serial.println("Resetting Angle!");
+  for (int i = 0; i < 3; i++) {
+    angle[i] = 0;
+  }
+}
 
 void loop() { 
-  //Serial.println(get_Z());
+  int test = get_Z();
+
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+
+    if (input.equals("4")) {
+      resetAngle();
+    }
+  }
   unsigned long currentMillis = millis();
   int sv = analogRead(A0);
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    float humi, temp;
     temp = dht.readTemperature();
     humi = dht.readHumidity();
 
@@ -185,38 +212,28 @@ void loop() {
       Serial.println("Failed to read from DHT Sensor!!");
       return;
     }
-    
-    Serial.print("Temperature: ");
-    Serial.print(temp);
-    Serial.print("°C , Humidity: ");
-    Serial.print(humi);
-    Serial.print("%, CO2: ");
-    Serial.print(sv);
-    Serial.print("ppm , PM10: ");
-    Serial.print(dustDensity);
-    Serial.println(" ug/m3");
   }
+  /*Serial.print("Temperature: ");
+  Serial.print(temp);
+  Serial.print("°C , Humidity: ");
+  Serial.print(humi);
+  Serial.print("%, CO2: ");
+  Serial.print(sv);
+  Serial.print("ppm , PM10: ");
+  Serial.print(dustDensity);
+  Serial.print(" ug/m3");
+  Serial.print(", ");*/
 
-  if (BTSerial.available()) {
-    data = BTSerial.read();
-    int cmd = atoi(data) - 48;
-
-    correction(cmd);
-
-    sm.moveTo(cmd);
-  }
-  
-  if (Serial.available() > 0) {
-    String receivedData = Serial.readString();
-    int data = receivedData.charAt(0); // 첫 번째 문자를 가져옴
-    
-    int cmd = data - 48;
-
-    correction(cmd);
-
-    sm.moveTo(cmd);
-  }
-  
-  
+  Serial.print("Temperature: ");
+  Serial.print(0);
+  Serial.print("°C , Humidity: ");
+  Serial.print(0);
+  Serial.print("%, CO2: ");
+  Serial.print(0);
+  Serial.print("ppm , PM10: ");
+  Serial.print(0);
+  Serial.print(" ug/m3");
+  Serial.print(", ");
+  Serial.println(test);
 
 }
