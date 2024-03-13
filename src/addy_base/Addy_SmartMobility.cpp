@@ -28,8 +28,8 @@ void Addy_SmartMobility::setSpeed(uint16_t speed) {
 
 
 void Addy_SmartMobility::setSpeed(uint8_t id, uint16_t speed) {
-	if(speed > 200){
-		speed = 200;
+	if(speed > 150){
+		speed = 150;
 	}
 	
 	if(id == 1){
