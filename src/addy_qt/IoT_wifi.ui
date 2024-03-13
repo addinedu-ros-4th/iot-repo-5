@@ -839,8 +839,8 @@
   <widget class="QPushButton" name="test">
    <property name="geometry">
     <rect>
-     <x>960</x>
-     <y>560</y>
+     <x>930</x>
+     <y>620</y>
      <width>51</width>
      <height>41</height>
     </rect>
@@ -852,8 +852,8 @@
   <widget class="QPushButton" name="test_2">
    <property name="geometry">
     <rect>
-     <x>1030</x>
-     <y>560</y>
+     <x>980</x>
+     <y>620</y>
      <width>51</width>
      <height>41</height>
     </rect>
@@ -865,8 +865,8 @@
   <widget class="QPushButton" name="test_3">
    <property name="geometry">
     <rect>
-     <x>1100</x>
-     <y>560</y>
+     <x>1030</x>
+     <y>620</y>
      <width>51</width>
      <height>41</height>
     </rect>
@@ -878,7 +878,7 @@
   <widget class="QPushButton" name="test_4">
    <property name="geometry">
     <rect>
-     <x>990</x>
+     <x>1080</x>
      <y>620</y>
      <width>51</width>
      <height>41</height>
@@ -891,7 +891,7 @@
   <widget class="QPushButton" name="test_5">
    <property name="geometry">
     <rect>
-     <x>1070</x>
+     <x>1130</x>
      <y>620</y>
      <width>51</width>
      <height>41</height>
@@ -921,6 +921,58 @@ border: 10px solid red; border-radius: 10px;</string>
    </property>
    <property name="text">
     <string>Emergency Stop</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="qr_btn">
+   <property name="geometry">
+    <rect>
+     <x>960</x>
+     <y>570</y>
+     <width>91</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>QR</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="manual_btn">
+   <property name="geometry">
+    <rect>
+     <x>1060</x>
+     <y>570</y>
+     <width>91</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>manual</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="manual_L">
+   <property name="geometry">
+    <rect>
+     <x>960</x>
+     <y>510</y>
+     <width>91</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>L</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="manual_R">
+   <property name="geometry">
+    <rect>
+     <x>1060</x>
+     <y>510</y>
+     <width>91</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>R</string>
    </property>
   </widget>
  </widget>

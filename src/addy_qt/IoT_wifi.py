@@ -14,6 +14,11 @@ import socket
 import signal
 import json
 
+import cv2
+import cv2.aruco as aruco
+
+import math
+
 from_class = uic.loadUiType("IoT_wifi.ui")[0]
 import pandas as pd
 #import atexit
@@ -24,20 +29,20 @@ class CommunicationThread(QThread):
         super().__init__()
         self.main = parent
         self.running = True
-        self.server_port = 9090
+        self.server_port = 9080
         self.max_users = 5 #maximum number of queued connections
-        self.cmd = "5"
-
+        # self.cmd = "5"
+        self.cmd = ["0","5","0","0","-0","-0"]
         self.connect()
 
-    def connect(self):
+    def connect(self, ip = "192.168.0.23"):
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.bind(("192.168.0.23", self.server_port))
+            self.server_socket.bind((ip, self.server_port))
             self.server_socket.listen(self.max_users)
         except Exception as e:
             print("ERRRORRRR::: ",e)
-
+    # [qr/manual, cmd, w1, w2, w3, w4]
     def run(self):
         count = 0
         try:
@@ -50,9 +55,8 @@ class CommunicationThread(QThread):
                         break
                     
                     decoded_data = data.decode()
-                    send_data = self.cmd
-                    encoded_send_data = send_data.encode('utf-8')
-                    sent = client_socket.send(encoded_send_data)
+                    send_data = ','.join(self.cmd).encode()
+                    sent = client_socket.sendall(send_data)
 
                     if sent == 0:
                         print("Socket connection broken")
@@ -61,12 +65,12 @@ class CommunicationThread(QThread):
                 # print("Disconnected")
                 client_socket.close()
                 count = count + 1
-
+                QThread.msleep(10)
         except Exception as e:
             print("ERROR: ",e)
             self.server_socket.close()
             time.sleep(1)
-            self.connect()
+            self.connect(ip="0.0.0.0")
 
     def close_socket(self):
         if hasattr(self, 'server_socket'):
@@ -106,7 +110,7 @@ class CommunicationThread(QThread):
         self.py_serial.write(encoded_data)"""
 
 class ImageLoaderThread(QThread):
-    update_signal = pyqtSignal(QPixmap)
+    update_signal = pyqtSignal(QPixmap, list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -114,10 +118,64 @@ class ImageLoaderThread(QThread):
         self.image_paths = ["../qr_detector/test/marker_0.png", "../qr_detector/test/marker_1.png",
                             "../qr_detector/test/marker_2.png", "../qr_detector/test/marker_3.png",
                             "../qr_detector/test/marker_4.png"]
+        self.qr_info = []
+        self.x, self.y, self.yaw = 0.0, 0.0, 0.0
+
+    def init_cam(self):
+        global blue_BGR, marker_3d_edges, cmtx, dist
+
+        self.cap = self.use_esp_cam()
+        cmtx = [[376.0221020,0.0,176.19498204],
+            [0.0,386.25988369,124.674899],
+            [0.0,0.0,1.0],]
+        dist = [-6.83045077e-02,  1.64416917e+00, -3.89914235e-03,  1.29325474e-02,  -6.00400981e+00]
+        aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+        parameters = aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(aruco_dict, parameters)
+        blue_BGR = (255, 0, 0)
+        marker_size = 200 # pixel
+        marker_3d_edges = np.array([    [0,0,0],
+                                        [0,marker_size,0],
+                                        [marker_size,marker_size,0],
+                                        [marker_size,0,0]], dtype = 'float32').reshape((4,1,3))
+
 
     def run(self):
+        global blue_BGR, marker_3d_edges, cmtx, dist
+        self.cap = self.use_esp_cam()
+        cmtx = [[376.0221020,0.0,176.19498204],
+            [0.0,386.25988369,124.674899],
+            [0.0,0.0,1.0],]
+        dist = [-6.83045077e-02,  1.64416917e+00, -3.89914235e-03,  1.29325474e-02,  -6.00400981e+00]
+        aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+        parameters = aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(aruco_dict, parameters)
+        blue_BGR = (255, 0, 0)
+        marker_size = 200 # pixel
+        marker_3d_edges = np.array([    [0,0,0],
+                                        [0,marker_size,0],
+                                        [marker_size,marker_size,0],
+                                        [marker_size,0,0]], dtype = 'float32').reshape((4,1,3))
+
         while self.running:
-            time.sleep(1)  # 1초마다 이미지 업데이트
+            ret, frame = self.cap.read()
+            if ret:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
+                frame_cen = frame.copy()
+
+                frame_cen, qr_info = self.find_center_pt(ids, frame_cen, corners)
+
+                pixmap = self.cv2_to_qpixmap(frame_cen)
+                self.update_signal.emit(pixmap, qr_info)
+                QThread.msleep(10)
+
+    def cv2_to_qpixmap(self, cv_img):
+        height, width, channel = cv_img.shape
+        bytesPerLine = 3 * width
+        qImg = QImage(cv_img.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        return QPixmap.fromImage(qImg)
+
 
     def load_image(self, path):
         try:
@@ -131,6 +189,48 @@ class ImageLoaderThread(QThread):
     def stop(self):
         self.running = False
         self.quit()
+
+
+    def find_center_pt(self, ids, frame, corners):
+        global blue_BGR, marker_3d_edges, cmtx, dist
+        self.qr_info.clear()
+        for i in range(len(corners)):
+            corner = corners[i][0]
+            ret, rvec, tvec = cv2.solvePnP(marker_3d_edges, corner, np.array(cmtx), np.array(dist))
+            center_x = int((corner[:, 0].min() + corner[:, 0].max()) / 2)
+            center_y = int((corner[:, 1].min() + corner[:, 1].max()) / 2)
+            id = ids[i][0]
+            cen_point = f"{center_x}, {center_y}"
+
+            # Get rpy (roll, pitch, yaw)
+            rpy = np.degrees(cv2.Rodrigues(rvec)[0].T[0])
+
+            cv2.putText(frame, f"ID={id}",(int(center_x), int(center_y)), cv2.FONT_HERSHEY_PLAIN, 1.1, (0, 0, 255))
+            cv2.putText(frame, cen_point,(int(center_x)-20, int(center_y)+20), cv2.FONT_HERSHEY_PLAIN, 1.1, (0, 0, 255))
+            cv2.circle(frame, (center_x, center_y), 4, (0, 255, 0), -1)
+
+            cv2.putText(frame, f"{rpy[0]:.2f}, {rpy[1]:.2f}, {rpy[2]:.2f}", (int(center_x)-70, int(center_y) + 40),
+                    cv2.FONT_HERSHEY_PLAIN, 1.1, (0, 0, 255))
+            
+            # Draw xyz coordinates
+            axis_points, _ = cv2.projectPoints(marker_3d_edges, rvec, tvec, np.array(cmtx), np.array(dist))
+            axis_points = np.int32(axis_points).reshape(-1, 2)
+            cv2.drawContours(frame, [axis_points[:4]], -1, (0, 255, 0), 3)
+            
+            self.x = center_x
+            self.y = center_y
+            self.yaw = rpy[0]
+            data = [id, self.x, self.y, self.yaw]
+            self.qr_info.append(data)
+        return frame, self.qr_info
+
+    def use_esp_cam(self):
+        # SERVER_IP = '192.168.0.37'
+        SERVER_IP = '192.168.0.2'
+        PORT = 81
+        esp_url = f"http://{SERVER_IP}:{PORT}/stream"
+        cap = cv2.VideoCapture(esp_url)
+        return cap
 
 
 class WindowClass(QMainWindow, from_class):
@@ -188,6 +288,14 @@ class WindowClass(QMainWindow, from_class):
         self.btncmd_8.clicked.connect(self.cmd_2)
         self.btncmd_9.clicked.connect(self.cmd_3)
         self.btncmd_emer.clicked.connect(self.cmd_emer)
+
+
+        self.qr_move = False
+        self.manual_move = False
+        self.qr_btn.clicked.connect(self.qr_mode)
+        self.manual_btn.clicked.connect(self.manual_mode)
+        self.manual_L.clicked.connect(self.manual_L_move)
+        self.manual_R.clicked.connect(self.manual_R_move)
         
                 
         self.row_count_1 = self.status_1.rowCount()
@@ -226,13 +334,41 @@ class WindowClass(QMainWindow, from_class):
         self.image_loader_thread = ImageLoaderThread(self)
         self.image_loader_thread.update_signal.connect(self.update_camera_image)
         self.image_loader_thread.start()
+        self.qr_info = []
+        self.temp_id = None
+        self.yaw_flag = False
+        self.x_flag = False
+        self.y_flag = False
+        self.corr_done = False
+        self.cur_pos = [0, 0]
 
         signal.signal(signal.SIGINT, self.signal_handler)
+
+    def qr_mode(self):
+        self.qr_move = True
+        self.manual_move = False
+        self.corr_done = False
+        self.yaw_flag = False
+        self.x_flag = False
+        self.y_flag = False
+        self.temp_id = None
+
+    def manual_mode(self):
+        self.manual_move = True
+        self.qr_move = False
+
+    def manual_L_move(self):
+        self.comm_thread.cmd = ["0","60","0","0","0","0"]
+
+    
+    def manual_R_move(self):
+        self.comm_thread.cmd = ["0","66","0","0","0","0"]
+
 
     def parsing_data(self, decoded):
         temp, humidity, co2, pm10, z_ang = 0.0, 0.0, 0, 0.0, 0.0
         split_data = decoded.split(',')
-        print(split_data)
+        # print(split_data)
         try:
             temp = 0.0
             humidity = 0.0
@@ -277,63 +413,164 @@ class WindowClass(QMainWindow, from_class):
             if pixmap:
                 self.image_loader_thread.update_signal.emit(pixmap)
 
-    def update_camera_image(self, pixmap):
+    def update_camera_image(self, pixmap, qr_info):
         self.camera.setPixmap(pixmap)
         self.camera.setAlignment(Qt.AlignCenter)
+        # print(qr_info)
+        try:
+            self.qr_info = qr_info
+            id = self.qr_info[0][0]
+            if id != self.temp_id:
+                self.corr_done = False
+
+            if self.qr_move and not self.corr_done:
+                self.cal_qr_cmd()
+        except:
+            pass
+    def move(self, distance, direction):
+        self.cur_pos[0] += distance * np.cos(direction)
+        self.cur_pos[1] += distance * np.sin(direction)
+
+    def cal_qr_cmd(self):
+        try:
+            # print(self.qr_info[0])
+            id = self.qr_info[0][0]
+            x = self.qr_info[0][1]
+            y = self.qr_info[0][2]
+            yaw = self.qr_info[0][3]
+            width = 320
+            height = 240
+
+            target_x = width/2.0
+            target_y = height/2.0
+
+            if self.temp_id != id:
+                self.temp_id = id
+                self.yaw_flag = False
+                self.x_flag = False
+                self.y_flag = False
+
+
+            now_x_diff = width - x
+            now_y_diff = height - y
+            cal_x = x - now_x_diff
+            cal_y = y - now_y_diff
+
+
+            arc_x, arc_y = x, y
+            delta_x = target_x - arc_x
+            delta_y = target_y - arc_y
+
+            distance = np.sqrt(delta_x**2 + delta_y**2)
+            angle = np.arctan2(delta_x, delta_y)
+
+            vx = distance * np.cos(angle) * 0.08
+            vz = angle * 0.5
+
+            # print(vx, vz)
+
+            r = 0.025
+            b = 0.11
+            w1 = (1/r) * (vx-vz*b/2)
+            w2 = (1/r) * (vx+vz*b/2)
+            w3 = (1/r) * (vx-vz*b/2)
+            w4 = (1/r) * (vx+vz*b/2)
+
+            if abs(w1)>120:
+                if w1>0:
+                    w1 = 120
+                else:
+                    w1 = -120
+            if abs(w2)>120:
+                if w2>0:
+                    w2 = 120
+                else:
+                    w2 = -120
+            if abs(w3)>120:
+                if w3>0:
+                    w3 = 120
+                else :
+                    w3 = -120
+            if abs(w4)>120:
+                if w4>0:
+                    w4 = 120
+                else:
+                    w4 = -120
+            # print(w1, w2, w3, w4)
+            self.comm_thread.cmd = ["1","5",str(w4),str(w1),str(w2),str(w3)]
+
+        except Exception as e:
+            # print(e)
+            pass
 
     def cmd_1(self):
         print('hi')
         data_to_send = "1"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "1"
-        
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","1","0","0","0","0"]
+
     def cmd_2(self):
         print('hi')
         data_to_send = "2"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "2"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","2","0","0","0","0"]
 
     def cmd_3(self):
         print('hi')
         data_to_send = "3"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "3"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","3","0","0","0","0"]
+
 
     def cmd_4(self):
         print('hi')
         data_to_send = "4"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "4"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","4","0","0","0","0"]
+
 
     def cmd_5(self):
         print('hi')
         data_to_send = "5"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "5"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","5","0","0","0","0"]
+
         
     def cmd_6(self):
         print('hi')
         data_to_send = "6"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "6"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","6","0","0","0","0"]
+
 
     def cmd_7(self):
         print('hi')
         data_to_send = "7"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "7"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","7","0","0","0","0"]
+
 
     def cmd_8(self):
         print('hi')
         data_to_send = "8"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "8"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","8","0","0","0","0"]
+
 
     def cmd_9(self):
         print('hi')
         data_to_send = "9"
         # self.sensor_thread.send_serial_data(data_to_send)
-        self.comm_thread.cmd = "9"
+        if self.manual_move:
+            self.comm_thread.cmd = ["0","9","0","0","0","0"]
 
     def update_data(self, frame):
         # 데이터를 파싱하여 각 변수에 저장
@@ -393,10 +630,13 @@ class WindowClass(QMainWindow, from_class):
 
     # AQI 상태 가져오기 함수
     def get_aqi_status(self, aqi):
-        for i in range(len(self.aqi_bins)):
-            if aqi <= self.aqi_bins[i]:
-                return self.aqi_labels[i]
-        return self.aqi_labels[-1]  # 최대 범위 이상인 경우
+        try:
+            for i in range(len(self.aqi_bins)):
+                if aqi <= self.aqi_bins[i]:
+                    return self.aqi_labels[i]
+            return self.aqi_labels[-1]  # 최대 범위 이상인 경우
+        except Exception as e:
+            print("get_aqi_status : ", e)
 
     
     def popPlot(self) :
@@ -500,69 +740,76 @@ class WindowClass(QMainWindow, from_class):
         
         
     def Add_1(self):
-        self.status_1.insertRow(self.row_count_1)
-        self.status_1.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_1.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_1.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text())) 
-        self.status_1.setItem(self.row_count_1, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
-        self.status_1.setItem(self.row_count_1, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
-        self.place = "1"
+        # self.status_1.insertRow(self.row_count_1)
+        # self.status_1.setItem(self.row_count_1, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        # self.status_1.setItem(self.row_count_1, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        # self.status_1.setItem(self.row_count_1, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text())) 
+        # self.status_1.setItem(self.row_count_1, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        # self.status_1.setItem(self.row_count_1, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        # self.place = "1"
 
-        self.changeQR1Color()
-        self.load_marker_image(0) 
+        # self.changeQR1Color()
+        # self.load_marker_image(0) 
+        self.comm_thread.cmd = ["1","5","100","0","0","0"]
 
     def Add_2(self):
-        self.status_2.insertRow(self.row_count_2)
-        self.status_2.setItem(self.row_count_2, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_2.setItem(self.row_count_2, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_2.setItem(self.row_count_2, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
-        self.status_2.setItem(self.row_count_2, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
-        self.status_2.setItem(self.row_count_2, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
-        self.place = "2"
+        # self.status_2.insertRow(self.row_count_2)
+        # self.status_2.setItem(self.row_count_2, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        # self.status_2.setItem(self.row_count_2, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        # self.status_2.setItem(self.row_count_2, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        # self.status_2.setItem(self.row_count_2, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        # self.status_2.setItem(self.row_count_2, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        # self.place = "2"
 
         
-        self.changeQR2Color()
-        self.load_marker_image(1) 
+        # self.changeQR2Color()
+        # self.load_marker_image(1) 
+        self.comm_thread.cmd = ["1","5","0","100","0","0"]
+
 
         
     def Add_3(self):
-        self.status_3.insertRow(self.row_count_3)
-        self.status_3.setItem(self.row_count_3, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_3.setItem(self.row_count_3, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_3.setItem(self.row_count_3, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
-        self.status_3.setItem(self.row_count_3, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
-        self.status_3.setItem(self.row_count_3, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
-        self.place = "3"
+        # self.status_3.insertRow(self.row_count_3)
+        # self.status_3.setItem(self.row_count_3, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        # self.status_3.setItem(self.row_count_3, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        # self.status_3.setItem(self.row_count_3, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        # self.status_3.setItem(self.row_count_3, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        # self.status_3.setItem(self.row_count_3, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        # self.place = "3"
 
         
-        self.changeQR3Color()
-        self.load_marker_image(2) 
+        # self.changeQR3Color()
+        # self.load_marker_image(2) 
+        self.comm_thread.cmd = ["1","5","0","0","100","0"]
 
         
     def Add_4(self):
-        self.status_4.insertRow(self.row_count_4)
-        self.status_4.setItem(self.row_count_4, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_4.setItem(self.row_count_4, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_4.setItem(self.row_count_4, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
-        self.status_4.setItem(self.row_count_4, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
-        self.status_4.setItem(self.row_count_4, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
-        self.place = "4"
+        # self.status_4.insertRow(self.row_count_4)
+        # self.status_4.setItem(self.row_count_4, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        # self.status_4.setItem(self.row_count_4, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        # self.status_4.setItem(self.row_count_4, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        # self.status_4.setItem(self.row_count_4, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        # self.status_4.setItem(self.row_count_4, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        # self.place = "4"
 
-        self.changeQR4Color()
-        self.load_marker_image(3) 
+        # self.changeQR4Color()
+        # self.load_marker_image(3) 
+        self.comm_thread.cmd = ["1","5","0","0","0","100"]
+
 
     def Add_5(self):
-        self.status_5.insertRow(self.row_count_5)
-        self.status_5.setItem(self.row_count_5, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
-        self.status_5.setItem(self.row_count_5, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
-        self.status_5.setItem(self.row_count_5, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
-        self.status_5.setItem(self.row_count_5, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
-        self.status_5.setItem(self.row_count_5, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
-        self.place = "5"
+        # self.status_5.insertRow(self.row_count_5)
+        # self.status_5.setItem(self.row_count_5, 0, QTableWidgetItem(self.LiveStatus.item(0, 0).text()))
+        # self.status_5.setItem(self.row_count_5, 1, QTableWidgetItem(self.LiveStatus.item(0, 1).text()))
+        # self.status_5.setItem(self.row_count_5, 2, QTableWidgetItem(self.LiveStatus.item(0, 2).text()))  
+        # self.status_5.setItem(self.row_count_5, 3, QTableWidgetItem(self.LiveStatus.item(0, 3).text()))
+        # self.status_5.setItem(self.row_count_5, 4, QTableWidgetItem(self.LiveStatus.item(0, 4).text())) 
+        # self.place = "5"
 
         
-        self.changeQR5Color()
-        self.load_marker_image(4) 
+        # self.changeQR5Color()
+        # self.load_marker_image(4) 
+        self.comm_thread.cmd = ["1","5","0","0","0","0"]
 
 
 
