@@ -13,12 +13,12 @@ enum AvoidanceState {
 };
 AvoidanceState avoidanceState = NO_OBSTACLE;
 
-// #define SSID "AIE_509_2.4G"
-// #define PASSWORD "addinedu_class1"
-#define SSID "iptime_addy"
-#define PASSWORD "12345678"
+#define SSID "AIE_509_2.4G"
+#define PASSWORD "addinedu_class1"
+// #define SSID "iptime_addy"
+// #define PASSWORD "12345678"
 #define HOST_NAME "192.168.0.23"
-#define HOST_PORT (9090)
+#define HOST_PORT (9080)
 
 SoftwareSerial mySerial(12, 13); /* RX:13, TX:12 */
 ESP8266 wifi(mySerial);
@@ -71,9 +71,35 @@ void setup() {
 
   imu_i2c_init();
 
-  speed = 125;
+  speed = 100;
   addy.setSpeed(speed);
   addy.moveTo(5);
+}
+
+#define NUM_ITEMS 6
+
+int value0, value1;
+int valuesArray[4];
+int w1, w2, w3, w4;
+
+void parseData(char* buffer) {
+  char* token;
+  char* tokens[NUM_ITEMS];
+  token = strtok(buffer, ",");
+  int index = 0;
+
+  while (token != NULL && index < NUM_ITEMS) {
+    tokens[index] = token;
+    token = strtok(NULL, ",");
+    index++;
+  }
+
+  value0 = atoi(tokens[0]);
+  value1 = atoi(tokens[1]);
+
+  for (int i = 0; i < NUM_ITEMS - 2; i++) {
+    valuesArray[i] = atoi(tokens[i + 2]);
+  }
 }
 
 void loop() {
@@ -110,35 +136,79 @@ void loop() {
 
   tcp_on();
   if (tcp_status) {
-    wifi.send((const uint8_t *)&merge_data, strlen(merge_data));
-
+    wifi.send((const uint8_t*)&merge_data, strlen(merge_data));
     uint32_t len = wifi.recv(buffer, sizeof(buffer), 10000);
     if (len > 0) {
-      // Serial.print("Received:[");
-      for (uint32_t i = 0; i < len; i++) {
-        Serial.print((char)buffer[i]);
-      }
-      // Serial.print("]\r\n");
-      cmd = (int)buffer[0] - 48;
-      // Serial.println(cmd);
+      String receivedData = String((char*)buffer);
+      parseData(buffer);
     }
   }
   tcp_off();
 
-  // Serial.print("IMU : ");
-  // Serial.println(z_val);
+  // Serial.print(value0);
+  // Serial.print(",");
+  // Serial.print(value1);
+  // Serial.print(",");
 
-  if (cmd == 2) {
-    correction_F(z_val);
-  } else if (cmd == 8) {
-    correction_B(z_val);
-  } else if (cmd == 4 || cmd == 6) {
-    correction_S(z_val);
+  // for (int i = 0; i < 4; i++) {
+  //   Serial.print(valuesArray[i]);
+  //   Serial.print(",");
+  // }
+  // Serial.println();
+
+  int cmd_type = value0;
+  if (cmd_type == 0) {
+    cmd = value1;
+    if (cmd <= 9) {
+      if (cmd == 2) {
+        correction_F(z_val);
+      } else if (cmd == 8) {
+        correction_B(z_val);
+      } else if (cmd == 4 || cmd == 6) {
+        correction_S(z_val);
+      }
+      if (cmd == 5) {
+        resetAngle();
+      }
+      addy.moveTo(cmd);
+    }
+    if (cmd == 66) {
+      addy.rotate(1);
+    } else if (cmd == 60) {
+      addy.rotate(2);
+    }
+  } else if (cmd_type == 1) {
+    w1 = valuesArray[0];
+    w2 = valuesArray[1];
+    w3 = valuesArray[2];
+    w4 = valuesArray[3];
+
+    addy.setSpeed(1, abs(w1));
+    addy.setSpeed(2, abs(w2));
+    addy.setSpeed(3, abs(w3));
+    addy.setSpeed(4, abs(w4));
+
+    if (w1 > 0) {
+      addy.setMotor(1, 1);
+    } else {
+      addy.setMotor(1, 2);
+    }
+    if (w2 > 0) {
+      addy.setMotor(2, 1);
+    } else {
+      addy.setMotor(2, 2);
+    }
+    if (w3 > 0) {
+      addy.setMotor(3, 1);
+    } else {
+      addy.setMotor(3, 2);
+    }
+    if (w4 > 0) {
+      addy.setMotor(4, 1);
+    } else {
+      addy.setMotor(4, 2);
+    }
   }
-  if (cmd == 5) {
-    resetAngle();
-  }
-  addy.moveTo(cmd);
 }
 
 void tcp_on() {
@@ -186,16 +256,6 @@ void connect_wifi() {
   }
 
   Serial.print("setup end\r\n");
-}
-
-
-void bluetooth_test() {
-  // if (BTSerial.available()) {
-  //   data = BTSerial.read();
-  //   cmd = data - 48;
-  //   correction(cmd);
-  //   addy.moveTo(cmd);
-  // }
 }
 
 void correction(int cmd) {
