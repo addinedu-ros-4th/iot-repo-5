@@ -1,17 +1,31 @@
-# IoT 프로젝트 5조 저장소 : 실내 환경 모니터링 모바일 로봇(AdDY)
-> Addy : Addin-edu Data Yummy
+# IoT 프로젝트 5조 : 실내 환경 모니터링 모바일 로봇(AdDY)
+<img src="https://img.shields.io/badge/ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white"><img src="https://img.shields.io/badge/c++-00599C?style=for-the-badge&logo=c++&logoColor=white"><img src="https://img.shields.io/badge/arduino-00878F?style=for-the-badge&logo=arduino&logoColor=white"><img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"><img src="https://img.shields.io/badge/qt-41CD52?style=for-the-badge&logo=qt&logoColor=white"><img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white"><img src="https://img.shields.io/badge/tensorflow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white"><img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"><img src="https://img.shields.io/badge/opencv-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white">
+
+<img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white"><img src="https://img.shields.io/badge/notion-000000?style=for-the-badge&logo=notion&logoColor=white">
 
 ## 1. 프로젝트 개요
+> AdDY : Addin-edu Data Yummy
 - 주제 : Addin Edu 학원 실내 환경 모니터링 모바일 로봇 시스템
-- 설명 : 주행 로봇이 학원 실내의 환경 데이터를 수집하여, 공간 사용자 또는 관리자에게 쾌적한 환경을 조성하기 위한 솔루션을 제안하는 시스템을 구현
+- 설명 : 주행 로봇이 실내 환경 데이터 수집 및 분석을 통해 사용자 또는 관리자에게 쾌적한 환경을 조성하기 위한 솔루션을 제안하는 시스템 구현
+## 2. 팀원 및 개발 진행 과정
+![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/53c2a93e-5918-455c-8209-2331c16f6f44)
+## 3. 시스템 구성도 및 작품 전체 구성
+- 시스템 구성도
+  
+  ![flowchart-main](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/23894484-271a-4d6d-a7af-9fc171900d24)
+- GUI 구성
 
-## 2. 팀원 담당 업무 및 프로젝트 진행 일정 계획
+  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/8ae379e6-b0a3-40c0-ae31-0a42fee33402)
+  
+- 모바일 로봇 HW 구성
 
+  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/dd43ab55-2aea-41e3-a2c8-c3fc481bdec7)
+## 4. 기능 리스트
+![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/85a9c237-6d02-47c1-b7dd-6b51e2875456)
 
-## 3. 시스템 구성도 및 작품 전체 구성 사진
+## 5. 시연 영상
 
-
-## 4. 기능 리스트 및 순서도
-
-
-## 5. 시연 영싱
+## 6. 개선 필요 사항
+1. 배선 상태 및 연결 불안정성 개선
+2. 아두이노에 여러 센서가 연결되면서 전력 부족 현상이 발생하여 esp32-cam 모듈이 정상 작동하지 않는 문제 -> 별도 외부 추가 전원을 인가하여 개선 필요
+3. 전력 부족 이슈 개선 후, 각 구역 센서 데이터 수집과 실내 주행 관련 추가 개발 필요
