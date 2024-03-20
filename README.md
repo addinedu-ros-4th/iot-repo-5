@@ -17,25 +17,23 @@
 - 주행 시나리오
 
   ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/c3e00510-0b32-4825-a72e-83c889cfdefc)
-  > 각 Place의 바닥에 부착된 QR 마커를 인식하여 사전 정의된 제어 값에 따라 로봇이 주행하며, 각 구역의 환경 데이터 수집 및 분석 수행
+  > 각 Place의 바닥에 부착된 QR 마커를 인식하여 사전 정의된 제어 값에 따라 로봇이 주행하며,
+  > 각 구역의 환경 데이터 수집 및 분석 수행
   - Place1 : 상담실
   - Place2 : 로비
   - Place3 : 회의실
   - Place4 : 강의장 입구
   - Place5 : 강의장 Front
   - Place6 : 강의장 End
-  
 - 시스템 구성도
   
   ![flowchart-main](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/23894484-271a-4d6d-a7af-9fc171900d24)
 - GUI 구성
 
-  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/8ae379e6-b0a3-40c0-ae31-0a42fee33402)
-  
+  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/ef820a8d-195a-47ee-9c8f-226c11b75bbf)
 - 모바일 로봇 HW 구성
 
   ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/a13d8c18-bb16-4958-9587-9722a1f84fdf)
-
 ## 4. 기능 리스트
 ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/85a9c237-6d02-47c1-b7dd-6b51e2875456)
 
