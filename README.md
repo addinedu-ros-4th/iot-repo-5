@@ -13,7 +13,18 @@
 - 설명 : 주행 로봇이 실내 환경 데이터 수집 및 분석을 통해 사용자 또는 관리자에게 쾌적한 환경을 조성하기 위한 솔루션을 제안하는 시스템 구현
 ## 2. 팀원 및 개발 진행 과정
 ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/53c2a93e-5918-455c-8209-2331c16f6f44)
-## 3. 시스템 구성도 및 작품 전체 구성
+## 3. 작품 시스템 구성
+- 주행 시나리오
+
+  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/c3e00510-0b32-4825-a72e-83c889cfdefc)
+  > 각 Place의 바닥에 부착된 QR 마커를 인식하여 사전 정의된 제어 값에 따라 로봇이 주행하며, 각 구역의 환경 데이터 수집 및 분석 수행
+  - Place1 : 상담실
+  - Place2 : 로비
+  - Place3 : 회의실
+  - Place4 : 강의장 입구
+  - Place5 : 강의장 Front
+  - Place6 : 강의장 End
+  
 - 시스템 구성도
   
   ![flowchart-main](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/23894484-271a-4d6d-a7af-9fc171900d24)
@@ -23,7 +34,8 @@
   
 - 모바일 로봇 HW 구성
 
-  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/dd43ab55-2aea-41e3-a2c8-c3fc481bdec7)
+  ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/a13d8c18-bb16-4958-9587-9722a1f84fdf)
+
 ## 4. 기능 리스트
 ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/85a9c237-6d02-47c1-b7dd-6b51e2875456)
 
