@@ -34,10 +34,6 @@
 ![image](https://github.com/addinedu-ros-4th/iot-repo-5/assets/87963649/85a9c237-6d02-47c1-b7dd-6b51e2875456)
 ## 5. 시연 영상
 [![Video](https://img.youtube.com/vi/DpeRxUGIuqw/maxresdefault.jpg)](https://www.youtube.com/watch?v=DpeRxUGIuqw)
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/DpeRxUGIuqw" frameborder="0" allowfullscreen></iframe>
-
-
 ## 6. 개선 필요 사항
 1. 배선 상태 및 연결 불안정성 개선
 2. 아두이노에 여러 센서가 연결되면서 전력 부족 현상이 발생하여 esp32-cam 모듈이 정상 작동하지 않는 문제 -> 별도 외부 추가 전원을 인가하여 개선 필요
